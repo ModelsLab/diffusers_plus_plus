@@ -1,1 +1,1 @@
-from .controlnet import ControlNetModel
+from .controlnet import UniControlModel
