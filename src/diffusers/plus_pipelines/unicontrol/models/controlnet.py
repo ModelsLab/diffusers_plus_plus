@@ -168,6 +168,8 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalControlNetMixin):
         projection_class_embeddings_input_dim (`int`, *optional*, defaults to `None`):
             The dimension of the `class_labels` input when `class_embed_type="projection"`. Required when
             `class_embed_type="projection"`.
+        controlnet_conditioning_embedding (`str`, defaults to `"ControlNetConditioningEmbedding"`): if set to ControlNetConditioningEmbedding,
+            uses the controlnet architecture for a single conditioning. Passing `UniControlTaskMOEEmbedding`, enables the archictecture for UniControl MOE conditioning.
         controlnet_conditioning_channel_order (`str`, defaults to `"rgb"`):
             The channel order of conditional image. Will convert to `rgb` if it's `bgr`.
         conditioning_embedding_out_channels (`tuple[int]`, *optional*, defaults to `(16, 32, 96, 256)`):

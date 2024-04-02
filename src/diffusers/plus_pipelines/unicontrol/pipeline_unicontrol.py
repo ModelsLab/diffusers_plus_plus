@@ -8,7 +8,8 @@ from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 
 from ...image_processor import PipelineImageInput, VaeImageProcessor
 from ...loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
-from ...models import AutoencoderKL, ControlNetModel, UNet2DConditionModel
+from ...models import AutoencoderKL, UNet2DConditionModel
+from .models import ControlNetModel
 from ...models.lora import adjust_lora_scale_text_encoder
 from ...schedulers import KarrasDiffusionSchedulers
 from ...utils import (
