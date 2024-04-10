@@ -28,11 +28,13 @@ def cosine_distance(image_embeds, text_embeds):
     normalized_text_embeds = nn.functional.normalize(text_embeds)
     return torch.mm(normalized_image_embeds, normalized_text_embeds.t())
 
-def jaccard_distance(image_embeds, text_embeds):
-    normalized_image_embeds = nn.functional.normalize(image_embeds)
-    normalized_text_embeds = nn.functional.normalize(text_embeds)
-    
+def jaccard_distance(image_embeds, text_embeds, eps=1e-8):
+    scaler = torch.bmm(image_embeds.unsqueeze(1),text_embeds.unsqueeze(2)).squeeze(2))
+    image_square = image_embeds.pow(2).sum(dim=-1, keepdim=True)
+    text_square = text_embeds.pow(2).sum(dim=-1, keepdim=True)
 
+    return scaler / (image_square + text_square.transpose(0,1) - scaler + eps)
+    
 class StableDiffusionSafetyChecker(PreTrainedModel):
     config_class = CLIPConfig
 
