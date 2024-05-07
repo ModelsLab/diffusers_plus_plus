@@ -29,6 +29,7 @@ _import_structure = {
     "configuration_utils": ["ConfigMixin"],
     "models": [],
     "pipelines": [],
+    "plus_pipelines": [],
     "schedulers": [],
     "utils": [
         "OptionalDependencyNotAvailable",
@@ -317,6 +318,11 @@ else:
             "WuerstchenCombinedPipeline",
             "WuerstchenDecoderPipeline",
             "WuerstchenPriorPipeline",
+        ]
+    )
+    _import_structure["plus_pipelines"].extend(
+        [
+            "StableDiffusionUniControlPipeline",
         ]
     )
 
@@ -689,6 +695,9 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
             WuerstchenCombinedPipeline,
             WuerstchenDecoderPipeline,
             WuerstchenPriorPipeline,
+        )
+        from .plus_pipelines import(
+            StableDiffusionUniControlPipeline
         )
 
     try:
