@@ -1,4 +1,4 @@
-# Copyright 2023 The HuggingFace Team. All rights reserved.
+ Copyright 2023 The HuggingFace Team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,20 +24,20 @@ import torch.nn.functional as F
 from PIL import Image
 from transformers import CLIPTextModel, CLIPTextModelWithProjection, CLIPTokenizer
 
-from diffusers.image_processor import VaeImageProcessor
-from diffusers.loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+from ...image_processor import VaeImageProcessor
+from ...loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
 # from diffusers.models import AutoencoderKL, UNet2DConditionModel
-from diffusers.models import AutoencoderKL, ControlNetModel
-from model.unet_adapter import UNet2DConditionModel
+from ...models import AutoencoderKL, ControlNetModel
+from ...model.unet_adapter import UNet2DConditionModel
 
-from diffusers.models.attention_processor import (
+from ...models.attention_processor import (
     AttnProcessor2_0,
     LoRAAttnProcessor2_0,
     LoRAXFormersAttnProcessor,
     XFormersAttnProcessor,
 )
-from diffusers.schedulers import KarrasDiffusionSchedulers
-from diffusers.utils import (
+from ...schedulers import KarrasDiffusionSchedulers
+from ...utils import (
     is_accelerate_available,
     is_accelerate_version,
     is_invisible_watermark_available,
@@ -45,14 +45,10 @@ from diffusers.utils import (
     randn_tensor,
     replace_example_docstring,
 )
-from diffusers.pipelines.pipeline_utils import DiffusionPipeline
-from diffusers.pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
-from model.adapter import Adapter_XL
-from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
-
-if is_invisible_watermark_available():
-    from diffusers.pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
-
+from ...pipeline_utils import DiffusionPipeline
+from ...pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
+from ...plus_model.adapter import Adapter_XL
+from ...pipelines.controlnet.multicontrolnet import MultiControlNetModel
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -176,10 +172,7 @@ class StableDiffusionXLAdapterControlnetPipeline(DiffusionPipeline, FromSingleFi
 
         add_watermarker = add_watermarker if add_watermarker is not None else is_invisible_watermark_available()
 
-        if add_watermarker:
-            self.watermark = StableDiffusionXLWatermarker()
-        else:
-            self.watermark = None
+        self.watermark = None
 
 
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.enable_vae_slicing

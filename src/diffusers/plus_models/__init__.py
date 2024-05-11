@@ -26,11 +26,13 @@ _import_structure = {}
 
 if is_torch_available():
     _import_structure["ella"] = ["ELLA", "ELLAProxyUNet"]
+    _import_structure["adapter"] = ["Adapter_XL"]
 
 
 if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
     if is_torch_available():
         from .ella import ELLA, ELLAProxyUNet
+        from .adapter import Adapter_XL
 
 else:
     import sys
