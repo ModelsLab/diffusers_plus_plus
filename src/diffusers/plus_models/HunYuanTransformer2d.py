@@ -504,7 +504,8 @@ def HunYuanDiT(ModelMixin, ConfigMixin):
     qk_norm = True
 
     """
-    Text Prompt -- T5 -- MLP -- Text Embedding [+ CLIP]
+    General Flow from the paper -
+    [Text Prompt] ... [T5] ... [MLP] ... [Text Embedding [+ CLIP]]
     """
     self.mlp_t5 = nn.Sequential(
         nn.Linear(self.text_states_dim_T5, self.text_states_dim_T5 * 4,bias=True)
