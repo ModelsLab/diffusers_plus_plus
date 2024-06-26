@@ -56,7 +56,7 @@ Currently, Diffusers++ can be installed through cloning the repository:
 ```sh
 git clone https://github.com/ModelsLab/diffusers_plus_plus.git
 cd diffusers_plus_plus
-python -m pip install -e .
+python -m pip install -e
 ```
 
 ### Apple Silicon (M1/M2) support
