@@ -40,34 +40,23 @@ limitations under the License.
 
 Diffusers++ offers three core components:
 
-- State-of-the-art [diffusion pipelines](https://huggingface.co/docs/diffusers/api/pipelines/overview) that can be run in inference with just a few lines of code.
+- **Plus Pipelines** and **Plus Models** include the latest advancements such as CHAMP, ELLA, and FIFO-Diffusion. We strive to incorporate the latest advances in the image and audio fields to ensure our library remains cutting-edge. Additionally, we offer state-of-the-art [diffusion pipelines](https://huggingface.co/docs/diffusers/api/pipelines/overview) that can be run in inference with just a few lines of code.
+
 - Interchangeable noise [schedulers](https://huggingface.co/docs/diffusers/api/schedulers/overview) for different diffusion speeds and output quality.
-- Pretrained [models](https://huggingface.co/docs/diffusers/api/models/overview) that can be used as building blocks, and combined with schedulers, for creating your own end-to-end diffusion systems.
+- Pretrained [models](https://huggingface.co/docs/diffusers/api/models/overview) that can be used as building blocks, and combined with schedulers, for creating your own end-to-end diffusion systems. Additionally, **Plus Models** replicate some of the latest advancements, including CHAMP and ELLA, to provide state-of-the-art performance.
 
 ## Installation
 
-We recommend installing Diffusers++ in a virtual environment from PyPI or Conda. For more details about installing [PyTorch](https://pytorch.org/get-started/locally/) and [Flax](https://flax.readthedocs.io/en/latest/#installation), please refer to their official documentation.
+We recommend installing Diffusers++ in a virtual environment from PyPI or Conda. For more details about installing [PyTorch](https://pytorch.org/get-started/locally/), please refer to their official documentation.
 
-### PyTorch
+### Diffusers++
 
-With `pip` (official package):
-
-```bash
-pip install --upgrade diffusers[torch]
-```
-
-With `conda` (maintained by the community):
+Currently, Diffusers++ can be installed through cloning the repository:
 
 ```sh
-conda install -c conda-forge diffusers
-```
-
-### Flax
-
-With `pip` (official package):
-
-```bash
-pip install --upgrade diffusers[flax]
+git clone https://github.com/ModelsLab/diffusers_plus_plus.git
+cd diffusers_plus_plus
+pip install -e .
 ```
 
 ### Apple Silicon (M1/M2) support
@@ -145,79 +134,30 @@ You can look out for [issues](https://github.com/ModelsLab/diffusers_plus_plus/i
 
 Also, say 👋 in our public Discord channel <a href="https://discord.gg/HPN4TVHR"><img alt="Join us on Discord" src="https://img.shields.io/discord/823813159592001537?color=5865F2&logo=discord&logoColor=white"></a>. We discuss the hottest trends about diffusion models, help each other with contributions, personal projects or just chill out 🔥.
 
-## Popular Tasks & Pipelines
+## Popular Tasks & Plus Pipelines
 
 <table>
   <tr>
     <th>Task</th>
     <th>Pipeline</th>
-    <th>🤗 Hub</th>
+    <th>🔥Diffusers++🔥 Hub</th>
   </tr>
   <tr style="border-top: 2px solid black">
     <td>Generating Infinite Videos from Text(upcoming)</td>
     <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/dummy_pipeline">FIFO-Diffusion</a></td>
-    <td><a href="https://github.com/ModelsLab/diffusers_plus_plus/blob/main/src/diffusers/plus_pipelines/ella/pipeline_ella.py">dummy/dummy-pipeline</a></td>
-  </tr>
-  <tr style="border-top: 2px solid black">
-    <td>Unconditional Image Generation</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/ddpm">DDPM</a></td>
-    <td><a href="https://huggingface.co/google/ddpm-ema-church-256">google/ddpm-ema-church-256</a></td>
+    <td><a href="<--left empty for now-->">dummy/dummy-pipeline</a></td>
   </tr>
   <tr style="border-top: 2px solid black">
     <td>Text-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/text2img">Stable Diffusion Text-to-Image</a></td>
-    <td><a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">runwayml/stable-diffusion-v1-5</a></td>
+    <td><a href="https://github.com/ModelsLab/diffusers_plus_plus/blob/main/src/diffusers/plus_pipelines/ella/pipeline_ella.py">ELLA</a></td>
+    <td><a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">dummy/dummy-pipeline</a></td>
   </tr>
   <tr>
-    <td>Text-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/unclip">unCLIP</a></td>
-    <td><a href="https://huggingface.co/kakaobrain/karlo-v1-alpha">kakaobrain/karlo-v1-alpha</a></td>
+    <td>Parametric 3D Human Animation via Latent Diffusion</td>
+    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/unclip">CHAMP</a></td>
+    <td><a href="https://huggingface.co/kakaobrain/karlo-v1-alpha">dummy/dummy-pipeline</a></td>
   </tr>
-  <tr>
-    <td>Text-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/deepfloyd_if">DeepFloyd IF</a></td>
-    <td><a href="https://huggingface.co/DeepFloyd/IF-I-XL-v1.0">DeepFloyd/IF-I-XL-v1.0</a></td>
-  </tr>
-  <tr>
-    <td>Text-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/kandinsky">Kandinsky</a></td>
-    <td><a href="https://huggingface.co/kandinsky-community/kandinsky-2-2-decoder">kandinsky-community/kandinsky-2-2-decoder</a></td>
-  </tr>
-  <tr style="border-top: 2px solid black">
-    <td>Text-guided Image-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/controlnet">ControlNet</a></td>
-    <td><a href="https://huggingface.co/lllyasviel/sd-controlnet-canny">lllyasviel/sd-controlnet-canny</a></td>
-  </tr>
-  <tr>
-    <td>Text-guided Image-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/pix2pix">InstructPix2Pix</a></td>
-    <td><a href="https://huggingface.co/timbrooks/instruct-pix2pix">timbrooks/instruct-pix2pix</a></td>
-  </tr>
-  <tr>
-    <td>Text-guided Image-to-Image</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/img2img">Stable Diffusion Image-to-Image</a></td>
-    <td><a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">runwayml/stable-diffusion-v1-5</a></td>
-  </tr>
-  <tr style="border-top: 2px solid black">
-    <td>Text-guided Image Inpainting</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/inpaint">Stable Diffusion Inpainting</a></td>
-    <td><a href="https://huggingface.co/runwayml/stable-diffusion-inpainting">runwayml/stable-diffusion-inpainting</a></td>
-  </tr>
-  <tr style="border-top: 2px solid black">
-    <td>Image Variation</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/image_variation">Stable Diffusion Image Variation</a></td>
-    <td><a href="https://huggingface.co/lambdalabs/sd-image-variations-diffusers">lambdalabs/sd-image-variations-diffusers</a></td>
-  </tr>
-  <tr style="border-top: 2px solid black">
-    <td>Super Resolution</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/upscale">Stable Diffusion Upscale</a></td>
-    <td><a href="https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler">stabilityai/stable-diffusion-x4-upscaler</a></td>
-  </tr>
-  <tr>
-    <td>Super Resolution</td>
-    <td><a href="https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/latent_upscale">Stable Diffusion Latent Upscale</a></td>
-    <td><a href="https://huggingface.co/stabilityai/sd-x2-latent-upscaler">stabilityai/sd-x2-latent-upscaler</a></td>
-  </tr>
+  
 </table>
 
 ## Popular libraries using 🧨 Diffusers
