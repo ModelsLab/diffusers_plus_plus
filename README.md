@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <p align="center">
     <br>
-    <img src="docs\source\en\imgs\test2.png" width="500"/>
+    <img src="docs\source\en\imgs\diffplusplus.png" width="500"/>
     <br>
 <p>
 <p align="center">
