@@ -145,6 +145,7 @@ else:
         [
             "ELLA",
             "EllaELLAProxyUNet",
+            "Adapter_XL"
         ]
     )
     _import_structure["schedulers"].extend(
@@ -501,6 +502,7 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
         from plus_models import (
             ELLA,
             ELLAProxyUNet,
+            Adapter_XL,
         )
 
         from .models import (
