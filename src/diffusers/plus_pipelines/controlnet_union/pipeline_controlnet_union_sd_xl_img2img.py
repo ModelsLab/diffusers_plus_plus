@@ -36,7 +36,7 @@ from ...loaders import (
     StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
 )
-from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel
+from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel,ControlNetModel
 from ...plus_models.controlnet_union import ControlNetModel_Union
 from ...models.attention_processor import (
     AttnProcessor2_0,

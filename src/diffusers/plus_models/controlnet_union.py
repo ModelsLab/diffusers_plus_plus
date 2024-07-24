@@ -778,7 +778,7 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalControlNetMixin
             attention_mask = (1 - attention_mask.to(sample.dtype)) * -10000.0
             attention_mask = attention_mask.unsqueeze(1)
 
-        # 1. time
+        # 1. time(i think this is related to denoising)
         timesteps = timestep
         if not torch.is_tensor(timesteps):
             # TODO: this requires sync between CPU and GPU. So try to pass timesteps as tensors if you can
@@ -802,7 +802,7 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalControlNetMixin
         # there might be better ways to encapsulate this.
         t_emb = t_emb.to(dtype=sample.dtype)
 
-        emb = self.time_embedding(t_emb, timestep_cond)
+        emb = self.time_embedding(t_emb, timestep_cond)#emb has time only till now
         aug_emb = None
 
         if self.class_embedding is not None:
@@ -813,45 +813,46 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalControlNetMixin
                 class_labels = self.time_proj(class_labels)
 
             class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
-            emb = emb + class_emb
+            emb = emb + class_emb#if class emb is not none it is added to emb(which only had time emb)
 
+        #additional (aug) conditions than time ,text-> we take encoder hidden states
         if self.config.addition_embed_type is not None:
             if self.config.addition_embed_type == "text":
                 aug_emb = self.add_embedding(encoder_hidden_states)
 
-            elif self.config.addition_embed_type == "text_time":
+            elif self.config.addition_embed_type == "text_time":#this time is realted to temporal consistency
                 if "text_embeds" not in added_cond_kwargs:
                     raise ValueError(
                         f"{self.__class__} has the config param `addition_embed_type` set to 'text_time' which requires the keyword argument `text_embeds` to be passed in `added_cond_kwargs`"
                     )
-                text_embeds = added_cond_kwargs.get("text_embeds")
+                text_embeds = added_cond_kwargs.get("text_embeds")#text embeds yaha se aayi
                 if "time_ids" not in added_cond_kwargs:
                     raise ValueError(
                         f"{self.__class__} has the config param `addition_embed_type` set to 'text_time' which requires the keyword argument `time_ids` to be passed in `added_cond_kwargs`"
                     )
                 time_ids = added_cond_kwargs.get("time_ids")
-                time_embeds = self.add_time_proj(time_ids.flatten())
-                time_embeds = time_embeds.reshape((text_embeds.shape[0], -1))
+                time_embeds = self.add_time_proj(time_ids.flatten())#time ids=>proj layer=>time embeds
+                time_embeds = time_embeds.reshape((text_embeds.shape[0], -1))#time emb=>reshape=>text emb
 
-                add_embeds = torch.concat([text_embeds, time_embeds], dim=-1)
+                add_embeds = torch.concat([text_embeds, time_embeds], dim=-1)#text+time conditioning
                 add_embeds = add_embeds.to(emb.dtype)
-                aug_emb = self.add_embedding(add_embeds)
+                aug_emb = self.add_embedding(add_embeds)#aug=text+time(comes from time ids)
 
         # Copyright by Qi Xin(2024/07/06)
         # inject control type info to time embedding to distinguish different control conditions
         control_type = added_cond_kwargs.get('control_type')
         control_embeds = self.control_type_proj(control_type.flatten())
-        control_embeds = control_embeds.reshape((t_emb.shape[0], -1))
-        control_embeds = control_embeds.to(emb.dtype)
-        control_emb = self.control_add_embedding(control_embeds)
+        control_embeds = control_embeds.reshape((t_emb.shape[0], -1))#t_emb ki shape
+        control_embeds = control_embeds.to(emb.dtype)#dtype match
+        control_emb = self.control_add_embedding(control_embeds)#pass it thru another layer to get control emb that can be added(maybe to learn a complex representation)
         emb = emb + control_emb
         #---------------------------------------------------------------------------------
 
-        emb = emb + aug_emb if aug_emb is not None else emb
+        emb = emb + aug_emb if aug_emb is not None else emb#has control +time + text/text_time +class(if there)
 
         # 2. pre-process
-        sample = self.conv_in(sample)
-        indices = torch.nonzero(control_type[0])
+        sample = self.conv_in(sample)#noisy sample
+        indices = torch.nonzero(control_type[0])#control type# return 2d tensor indices of all non zero values
 
         # Copyright by Qi Xin(2024/07/06)
         # add single/multi conditons to input image.
@@ -860,27 +861,28 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalControlNetMixin
         condition_list = []
 
         for idx in range(indices.shape[0] + 1):
-            if idx == indices.shape[0]:
+            if idx == indices.shape[0]:#last iteration
                 controlnet_cond = sample
                 feat_seq = torch.mean(controlnet_cond, dim=(2, 3)) # N * C
             else:
-                controlnet_cond = self.controlnet_cond_embedding(controlnet_cond_list[indices[idx][0]])
+                controlnet_cond = self.controlnet_cond_embedding(controlnet_cond_list[indices[idx][0]])#condition list has input control images, from there we pick one or many and get the embeddings
                 feat_seq = torch.mean(controlnet_cond, dim=(2, 3)) # N * C
-                feat_seq = feat_seq + self.task_embedding[indices[idx][0]]
+                feat_seq = feat_seq + self.task_embedding[indices[idx][0]]#task embedding is added to the condition embedding(task emb can be hard coded)
 
-            inputs.append(feat_seq.unsqueeze(1))
-            condition_list.append(controlnet_cond)
+            inputs.append(feat_seq.unsqueeze(1))#has everything except input image
+            condition_list.append(controlnet_cond)#has only controlent emb 
 
         x = torch.cat(inputs, dim=1)  # NxLxC
         x = self.transformer_layes(x)
 
-        controlnet_cond_fuser = sample * 0.0
+        #for multiple control? forces condition more, fuses them with input image
+        controlnet_cond_fuser = sample * 0.0#same shape as input preprocessed noisy latent
         for idx in range(indices.shape[0]):
             alpha = self.spatial_ch_projs(x[:, idx])
             alpha = alpha.unsqueeze(-1).unsqueeze(-1)
             controlnet_cond_fuser += condition_list[idx] + alpha
-        
-        sample = sample + controlnet_cond_fuser
+            
+        sample = sample + controlnet_cond_fuser#noisy sample appended in end
         #-------------------------------------------------------------------------------------------
 
         # 3. down

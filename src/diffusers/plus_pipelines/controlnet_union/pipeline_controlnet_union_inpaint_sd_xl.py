@@ -152,7 +152,11 @@ def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
 
 
 class StableDiffusionXLControlNetUnionInpaintPipeline(
-    DiffusionPipeline, StableDiffusionMixin, StableDiffusionXLLoraLoaderMixin, FromSingleFileMixin, IPAdapterMixin
+    DiffusionPipeline, 
+    StableDiffusionMixin,
+      StableDiffusionXLLoraLoaderMixin,
+        FromSingleFileMixin,
+         IPAdapterMixin
 ):
     r"""
     Pipeline for text-to-image generation using Stable Diffusion XL.
@@ -1506,7 +1510,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
         )
         init_image = init_image.to(dtype=torch.float32)
 
-        # 5.2 Prepare control images
+        # 5.2 Prepare control images 
         for idx in range(len(control_image_list)):
             if control_image_list[idx]:
                 control_image = self.prepare_control_image(
