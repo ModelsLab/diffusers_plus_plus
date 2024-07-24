@@ -23,34 +23,34 @@ import torch
 import torch.nn.functional as F
 from transformers import CLIPTextModel, CLIPTextModelWithProjection, CLIPTokenizer
 
-from diffusers.utils.import_utils import is_invisible_watermark_available
+from ...utils.import_utils import is_invisible_watermark_available
 
-from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
-from diffusers.loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
-from diffusers.models import AutoencoderKL, ControlNetModel, UNet2DConditionModel
-from models.controlnet_union import ControlNetModel_Union
-from diffusers.models.attention_processor import (
+from ...image_processor import PipelineImageInput, VaeImageProcessor
+from ...loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+from ...models import AutoencoderKL, ControlNetModel, UNet2DConditionModel
+from ...plus_models.controlnet_union import ControlNetModel_Union
+from ...models.attention_processor import (
     AttnProcessor2_0,
     LoRAAttnProcessor2_0,
     LoRAXFormersAttnProcessor,
     XFormersAttnProcessor,
 )
-from diffusers.models.lora import adjust_lora_scale_text_encoder
-from diffusers.schedulers import KarrasDiffusionSchedulers
-from diffusers.utils import (
+from ...models.lora import adjust_lora_scale_text_encoder
+from ...schedulers import KarrasDiffusionSchedulers
+from ...utils import (
     is_accelerate_available,
     is_accelerate_version,
     logging,
     replace_example_docstring,
 )
-from diffusers.utils.torch_utils import is_compiled_module, randn_tensor
-from diffusers.pipelines.pipeline_utils import DiffusionPipeline
-from diffusers.pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
+from ...utils.torch_utils import is_compiled_module, randn_tensor
+from ...pipelines.pipeline_utils import DiffusionPipeline
+from ...pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
 
 if is_invisible_watermark_available():
-    from diffusers.pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
+    from ...pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
 
-from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
+from ...pipelines.controlnet.multicontrolnet import MultiControlNetModel
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
