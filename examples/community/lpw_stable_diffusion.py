@@ -11,11 +11,7 @@ from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 from diffusers import DiffusionPipeline
 from diffusers.configuration_utils import FrozenDict
 from diffusers.image_processor import VaeImageProcessor
-from diffusers.loaders import (
-    FromSingleFileMixin,
-    LoraLoaderMixin,
-    TextualInversionLoaderMixin,
-)
+from diffusers.loaders import FromSingleFileMixin, StableDiffusionLoraLoaderMixin, TextualInversionLoaderMixin
 from diffusers.models import AutoencoderKL, UNet2DConditionModel
 from diffusers.pipelines.pipeline_utils import StableDiffusionMixin
 from diffusers.pipelines.stable_diffusion import (
@@ -426,7 +422,7 @@ class StableDiffusionLongPromptWeightingPipeline(
     DiffusionPipeline,
     StableDiffusionMixin,
     TextualInversionLoaderMixin,
-    LoraLoaderMixin,
+    StableDiffusionLoraLoaderMixin,
     FromSingleFileMixin,
 ):
     r"""
