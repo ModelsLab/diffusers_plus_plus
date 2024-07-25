@@ -45,7 +45,8 @@ from ...utils import (
 )
 from ...utils.torch_utils import is_compiled_module, randn_tensor
 from ...pipelines.pipeline_utils import DiffusionPipeline
-from ...pipelines.stable_diffusion_xl import pipeline_output
+#from ...pipelines.stable_diffusion_xl import pipeline_output
+from ...pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
 
 if is_invisible_watermark_available():
     from ...pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
@@ -1177,8 +1178,7 @@ class StableDiffusionXLControlNetUnionPipeline(
 
         if not return_dict:
             return (image,)
-
-        return pipeline_output(images=image)
+        return StableDiffusionXLPipelineOutput(images=image)
 
     # Overrride to properly handle the loading and unloading of the additional text encoder.
     # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.StableDiffusionXLPipeline.load_lora_weights
