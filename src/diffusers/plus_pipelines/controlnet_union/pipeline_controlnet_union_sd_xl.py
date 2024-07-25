@@ -26,7 +26,7 @@ from transformers import CLIPTextModel, CLIPTextModelWithProjection, CLIPTokeniz
 from ...utils.import_utils import is_invisible_watermark_available
 
 from ...image_processor import PipelineImageInput, VaeImageProcessor
-from ...loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+from ...loaders import FromSingleFileMixin, StableDiffusionLoraLoaderMixin, TextualInversionLoaderMixin
 from ...models import AutoencoderKL, ControlNetModel, UNet2DConditionModel
 from ...plus_models.controlnet_union import ControlNetModel_Union
 from ...models.attention_processor import (
@@ -45,7 +45,7 @@ from ...utils import (
 )
 from ...utils.torch_utils import is_compiled_module, randn_tensor
 from ...pipelines.pipeline_utils import DiffusionPipeline
-from ...pipelines.stable_diffusion_xl import StableDiffusionXLPipelineOutput
+from ...pipelines.stable_diffusion_xl import pipeline_output
 
 if is_invisible_watermark_available():
     from ...pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
@@ -103,7 +103,7 @@ EXAMPLE_DOC_STRING = """
 
 
 class StableDiffusionXLControlNetUnionPipeline(
-    DiffusionPipeline, TextualInversionLoaderMixin, LoraLoaderMixin, FromSingleFileMixin
+    DiffusionPipeline, TextualInversionLoaderMixin, StableDiffusionLoraLoaderMixin, FromSingleFileMixin
 ):
     r"""
     Pipeline for text-to-image generation using Stable Diffusion XL with ControlNet guidance.
@@ -1178,7 +1178,7 @@ class StableDiffusionXLControlNetUnionPipeline(
         if not return_dict:
             return (image,)
 
-        return StableDiffusionXLPipelineOutput(images=image)
+        return pipeline_output(images=image)
 
     # Overrride to properly handle the loading and unloading of the additional text encoder.
     # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.StableDiffusionXLPipeline.load_lora_weights
