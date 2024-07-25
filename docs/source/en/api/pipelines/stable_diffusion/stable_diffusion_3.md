@@ -21,9 +21,9 @@ The abstract from the paper is:
 
 ## Usage Example
 
-_As the model is gated, before using it with diffusers you first need to go to the [Stable Diffusion 3 Medium Hugging Face page](https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers), fill in the form and accept the gate. Once you are in, you need to login so that your system knows you’ve accepted the gate._ 
+_As the model is gated, before using it with diffusers you first need to go to the [Stable Diffusion 3 Medium Hugging Face page](https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers), fill in the form and accept the gate. Once you are in, you need to login so that your system knows you’ve accepted the gate._
 
-Use the command below to log in: 
+Use the command below to log in:
 
 ```bash
 huggingface-cli login
@@ -34,7 +34,6 @@ huggingface-cli login
 The SD3 pipeline uses three text encoders to generate an image. Model offloading is necessary in order for it to run on most commodity hardware. Please use the `torch.float16` data type for additional memory savings.
 
 </Tip>
-
 
 ```python
 import torch
@@ -197,6 +196,68 @@ image.save("sd3_hello_world.png")
 
 Check out the full script [here](https://gist.github.com/sayakpaul/508d89d7aad4f454900813da5d42ca97).
 
+## Using Long Prompts with the T5 Text Encoder
+
+By default, the T5 Text Encoder prompt uses a maximum sequence length of `256`. This can be adjusted by setting the `max_sequence_length` to accept fewer or more tokens. Keep in mind that longer sequences require additional resources and result in longer generation times, such as during batch inference.
+
+```python
+prompt = "A whimsical and creative image depicting a hybrid creature that is a mix of a waffle and a hippopotamus, basking in a river of melted butter amidst a breakfast-themed landscape. It features the distinctive, bulky body shape of a hippo. However, instead of the usual grey skin, the creature’s body resembles a golden-brown, crispy waffle fresh off the griddle. The skin is textured with the familiar grid pattern of a waffle, each square filled with a glistening sheen of syrup. The environment combines the natural habitat of a hippo with elements of a breakfast table setting, a river of warm, melted butter, with oversized utensils or plates peeking out from the lush, pancake-like foliage in the background, a towering pepper mill standing in for a tree.  As the sun rises in this fantastical world, it casts a warm, buttery glow over the scene. The creature, content in its butter river, lets out a yawn. Nearby, a flock of birds take flight"
+
+image = pipe(
+    prompt=prompt,
+    negative_prompt="",
+    num_inference_steps=28,
+    guidance_scale=4.5,
+    max_sequence_length=512,
+).images[0]
+```
+
+### Sending a different prompt to the T5 Text Encoder
+
+You can send a different prompt to the CLIP Text Encoders and the T5 Text Encoder to prevent the prompt from being truncated by the CLIP Text Encoders and to improve generation.
+
+<Tip>
+
+The prompt with the CLIP Text Encoders is still truncated to the 77 token limit.
+
+</Tip>
+
+```python
+prompt = "A whimsical and creative image depicting a hybrid creature that is a mix of a waffle and a hippopotamus, basking in a river of melted butter amidst a breakfast-themed landscape. A river of warm, melted butter, pancake-like foliage in the background, a towering pepper mill standing in for a tree."
+
+prompt_3 = "A whimsical and creative image depicting a hybrid creature that is a mix of a waffle and a hippopotamus, basking in a river of melted butter amidst a breakfast-themed landscape. It features the distinctive, bulky body shape of a hippo. However, instead of the usual grey skin, the creature’s body resembles a golden-brown, crispy waffle fresh off the griddle. The skin is textured with the familiar grid pattern of a waffle, each square filled with a glistening sheen of syrup. The environment combines the natural habitat of a hippo with elements of a breakfast table setting, a river of warm, melted butter, with oversized utensils or plates peeking out from the lush, pancake-like foliage in the background, a towering pepper mill standing in for a tree.  As the sun rises in this fantastical world, it casts a warm, buttery glow over the scene. The creature, content in its butter river, lets out a yawn. Nearby, a flock of birds take flight"
+
+image = pipe(
+    prompt=prompt,
+    prompt_3=prompt_3,
+    negative_prompt="",
+    num_inference_steps=28,
+    guidance_scale=4.5,
+    max_sequence_length=512,
+).images[0]
+```
+
+## Tiny AutoEncoder for Stable Diffusion 3
+
+Tiny AutoEncoder for Stable Diffusion (TAESD3) is a tiny distilled version of Stable Diffusion 3's VAE by [Ollin Boer Bohan](https://github.com/madebyollin/taesd) that can decode [`StableDiffusion3Pipeline`] latents almost instantly.
+
+To use with Stable Diffusion 3:
+
+```python
+import torch
+from diffusers import StableDiffusion3Pipeline, AutoencoderTiny
+
+pipe = StableDiffusion3Pipeline.from_pretrained(
+    "stabilityai/stable-diffusion-3-medium-diffusers", torch_dtype=torch.float16
+)
+pipe.vae = AutoencoderTiny.from_pretrained("madebyollin/taesd3", torch_dtype=torch.float16)
+pipe = pipe.to("cuda")
+
+prompt = "slice of delicious New York-style berry cheesecake"
+image = pipe(prompt, num_inference_steps=25).images[0]
+image.save("cheesecake.png")
+```
+
 ## Loading the original checkpoints via `from_single_file`
 
 The `SD3Transformer2DModel` and `StableDiffusion3Pipeline` classes support loading the original checkpoints via the `from_single_file` method. This method allows you to load the original checkpoint files that were used to train the models.
@@ -211,17 +272,41 @@ model = SD3Transformer2DModel.from_single_file("https://huggingface.co/stability
 
 ## Loading the single checkpoint for the `StableDiffusion3Pipeline`
 
-```python
-from diffusers import StableDiffusion3Pipeline
-from transformers import T5EncoderModel
+### Loading the single file checkpoint without T5
 
-text_encoder_3 = T5EncoderModel.from_pretrained("stabilityai/stable-diffusion-3-medium-diffusers", subfolder="text_encoder_3", torch_dtype=torch.float16)
-pipe = StableDiffusion3Pipeline.from_single_file("https://huggingface.co/stabilityai/stable-diffusion-3-medium/blob/main/sd3_medium_incl_clips.safetensors", torch_dtype=torch.float16, text_encoder_3=text_encoder_3)
+```python
+import torch
+from diffusers import StableDiffusion3Pipeline
+
+pipe = StableDiffusion3Pipeline.from_single_file(
+    "https://huggingface.co/stabilityai/stable-diffusion-3-medium/blob/main/sd3_medium_incl_clips.safetensors",
+    torch_dtype=torch.float16,
+    text_encoder_3=None
+)
+pipe.enable_model_cpu_offload()
+
+image = pipe("a picture of a cat holding a sign that says hello world").images[0]
+image.save('sd3-single-file.png')
 ```
 
-<Tip>
-`from_single_file` support for the `fp8` version of the checkpoints is coming soon. Watch this space.
-</Tip>
+### Loading the single file checkpoint with T5
+
+> [!TIP]
+> The following example loads a checkpoint stored in a 8-bit floating point format which requires PyTorch 2.3 or later.
+
+```python
+import torch
+from diffusers import StableDiffusion3Pipeline
+
+pipe = StableDiffusion3Pipeline.from_single_file(
+    "https://huggingface.co/stabilityai/stable-diffusion-3-medium/blob/main/sd3_medium_incl_clips_t5xxlfp8.safetensors",
+    torch_dtype=torch.float16,
+)
+pipe.enable_model_cpu_offload()
+
+image = pipe("a picture of a cat holding a sign that says hello world").images[0]
+image.save('sd3-single-file-t5-fp8.png')
+```
 
 ## StableDiffusion3Pipeline
 
