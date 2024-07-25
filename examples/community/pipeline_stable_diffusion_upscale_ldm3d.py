@@ -21,21 +21,8 @@ import torch
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 
 from diffusers import DiffusionPipeline
-<<<<<<< HEAD
-from diffusers.image_processor import (
-    PipelineDepthInput,
-    PipelineImageInput,
-    VaeImageProcessorLDM3D,
-)
-from diffusers.loaders import (
-    FromSingleFileMixin,
-    LoraLoaderMixin,
-    TextualInversionLoaderMixin,
-)
-=======
 from diffusers.image_processor import PipelineDepthInput, PipelineImageInput, VaeImageProcessorLDM3D
 from diffusers.loaders import FromSingleFileMixin, StableDiffusionLoraLoaderMixin, TextualInversionLoaderMixin
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 from diffusers.models import AutoencoderKL, UNet2DConditionModel
 from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker

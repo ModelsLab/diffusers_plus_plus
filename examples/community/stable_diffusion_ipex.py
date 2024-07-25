@@ -63,14 +63,7 @@ EXAMPLE_DOC_STRING = """
 
 
 class StableDiffusionIPEXPipeline(
-<<<<<<< HEAD
-    DiffusionPipeline,
-    StableDiffusionMixin,
-    TextualInversionLoaderMixin,
-    LoraLoaderMixin,
-=======
     DiffusionPipeline, StableDiffusionMixin, TextualInversionLoaderMixin, StableDiffusionLoraLoaderMixin
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 ):
     r"""
     Pipeline for text-to-image generation using Stable Diffusion on IPEX.

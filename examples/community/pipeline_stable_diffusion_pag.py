@@ -19,11 +19,7 @@ from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
-<<<<<<< HEAD
-    LoraLoaderMixin,
-=======
     StableDiffusionLoraLoaderMixin,
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
     TextualInversionLoaderMixin,
 )
 from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel
@@ -354,15 +350,7 @@ def retrieve_timesteps(
 
 
 class StableDiffusionPAGPipeline(
-<<<<<<< HEAD
-    DiffusionPipeline,
-    TextualInversionLoaderMixin,
-    LoraLoaderMixin,
-    IPAdapterMixin,
-    FromSingleFileMixin,
-=======
     DiffusionPipeline, TextualInversionLoaderMixin, StableDiffusionLoraLoaderMixin, IPAdapterMixin, FromSingleFileMixin
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 ):
     r"""
     Pipeline for text-to-image generation using Stable Diffusion.

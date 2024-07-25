@@ -27,23 +27,8 @@ from transformers import (
 )
 
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
-<<<<<<< HEAD
-from diffusers.loaders import (
-    IPAdapterMixin,
-    LoraLoaderMixin,
-    TextualInversionLoaderMixin,
-)
-from diffusers.models import (
-    AutoencoderKL,
-    ControlNetModel,
-    ImageProjection,
-    UNet2DConditionModel,
-    UNetMotionModel,
-)
-=======
 from diffusers.loaders import IPAdapterMixin, StableDiffusionLoraLoaderMixin, TextualInversionLoaderMixin
 from diffusers.models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel, UNetMotionModel
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.models.unets.unet_motion_model import MotionAdapter
 from diffusers.pipelines.animatediff.pipeline_output import AnimateDiffPipelineOutput
@@ -144,11 +129,7 @@ class AnimateDiffControlNetPipeline(
     StableDiffusionMixin,
     TextualInversionLoaderMixin,
     IPAdapterMixin,
-<<<<<<< HEAD
-    LoraLoaderMixin,
-=======
     StableDiffusionLoraLoaderMixin,
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 ):
     r"""
     Pipeline for text-to-video generation.

@@ -1396,15 +1396,8 @@ def main(args):
         StableDiffusionLoraLoaderMixin.load_lora_into_unet(lora_state_dict, network_alphas=network_alphas, unet=unet_)
 
         text_encoder_state_dict = {k: v for k, v in lora_state_dict.items() if "text_encoder." in k}
-<<<<<<< HEAD
-        LoraLoaderMixin.load_lora_into_text_encoder(
-            text_encoder_state_dict,
-            network_alphas=network_alphas,
-            text_encoder=text_encoder_one_,
-=======
         StableDiffusionLoraLoaderMixin.load_lora_into_text_encoder(
             text_encoder_state_dict, network_alphas=network_alphas, text_encoder=text_encoder_one_
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
         )
 
     accelerator.register_save_state_pre_hook(save_model_hook)

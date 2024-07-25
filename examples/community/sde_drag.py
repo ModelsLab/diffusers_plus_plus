@@ -10,18 +10,8 @@ from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
-<<<<<<< HEAD
-from diffusers import (
-    AutoencoderKL,
-    DiffusionPipeline,
-    DPMSolverMultistepScheduler,
-    UNet2DConditionModel,
-)
-from diffusers.loaders import AttnProcsLayers, LoraLoaderMixin
-=======
 from diffusers import AutoencoderKL, DiffusionPipeline, DPMSolverMultistepScheduler, UNet2DConditionModel
 from diffusers.loaders import AttnProcsLayers, StableDiffusionLoraLoaderMixin
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 from diffusers.models.attention_processor import (
     AttnAddedKVProcessor,
     AttnAddedKVProcessor2_0,

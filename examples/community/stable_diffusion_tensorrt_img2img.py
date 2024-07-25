@@ -42,17 +42,7 @@ from polygraphy.backend.trt import (
     network_from_onnx_path,
     save_engine,
 )
-<<<<<<< HEAD
-from polygraphy.backend.trt import util as trt_util
-from transformers import (
-    CLIPFeatureExtractor,
-    CLIPTextModel,
-    CLIPTokenizer,
-    CLIPVisionModelWithProjection,
-)
-=======
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 
 from diffusers import DiffusionPipeline
 from diffusers.configuration_utils import FrozenDict, deprecate
@@ -1082,15 +1072,7 @@ class TensorRTStableDiffusionImg2ImgPipeline(DiffusionPipeline):
 
             noise_pred = runEngine(
                 self.engine["unet"],
-<<<<<<< HEAD
-                {
-                    "sample": sample_inp,
-                    "timestep": timestep_inp,
-                    "encoder_hidden_states": embeddings_inp,
-                },
-=======
                 {"sample": latent_model_input, "timestep": timestep_float, "encoder_hidden_states": text_embeddings},
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
                 self.stream,
             )["latent"]
 

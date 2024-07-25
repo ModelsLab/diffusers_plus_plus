@@ -1942,16 +1942,9 @@ def main(args):
     # provided (i.e. the --instance_prompt is used for all images), we encode the instance prompt once to avoid
     # the redundant encoding.
     if freeze_text_encoder and not train_dataset.custom_instance_prompts:
-<<<<<<< HEAD
-        (
-            instance_prompt_hidden_states,
-            instance_pooled_prompt_embeds,
-        ) = compute_text_embeddings(args.instance_prompt, text_encoders, tokenizers)
-=======
         instance_prompt_hidden_states, instance_pooled_prompt_embeds = compute_text_embeddings(
             args.instance_prompt, text_encoders, tokenizers, args.clip_skip
         )
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 
     # Handle class prompt for prior-preservation.
     if args.with_prior_preservation:

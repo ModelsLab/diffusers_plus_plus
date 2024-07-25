@@ -92,11 +92,7 @@ class DemoFusionSDXLPipeline(
     DiffusionPipeline,
     StableDiffusionMixin,
     FromSingleFileMixin,
-<<<<<<< HEAD
-    LoraLoaderMixin,
-=======
     StableDiffusionLoraLoaderMixin,
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
     TextualInversionLoaderMixin,
 ):
     r"""

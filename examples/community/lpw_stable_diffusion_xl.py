@@ -25,20 +25,8 @@ from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
-<<<<<<< HEAD
-    LoraLoaderMixin,
-    TextualInversionLoaderMixin,
-)
-from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel
-from diffusers.models.attention_processor import (
-    AttnProcessor2_0,
-    LoRAAttnProcessor2_0,
-    LoRAXFormersAttnProcessor,
-    XFormersAttnProcessor,
-=======
     StableDiffusionLoraLoaderMixin,
     TextualInversionLoaderMixin,
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 )
 from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel
 from diffusers.models.attention_processor import AttnProcessor2_0, XFormersAttnProcessor

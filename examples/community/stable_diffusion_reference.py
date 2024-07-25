@@ -14,11 +14,7 @@ from diffusers.image_processor import VaeImageProcessor
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
-<<<<<<< HEAD
-    LoraLoaderMixin,
-=======
     StableDiffusionLoraLoaderMixin,
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
     TextualInversionLoaderMixin,
 )
 from diffusers.models.attention import BasicTransformerBlock
@@ -94,15 +90,7 @@ def torch_dfs(model: torch.nn.Module):
 
 
 class StableDiffusionReferencePipeline(
-<<<<<<< HEAD
-    DiffusionPipeline,
-    TextualInversionLoaderMixin,
-    LoraLoaderMixin,
-    IPAdapterMixin,
-    FromSingleFileMixin,
-=======
     DiffusionPipeline, TextualInversionLoaderMixin, StableDiffusionLoraLoaderMixin, IPAdapterMixin, FromSingleFileMixin
->>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 ):
     r"""
     Pipeline for Stable Diffusion Reference.
