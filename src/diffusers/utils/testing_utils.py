@@ -593,7 +593,7 @@ def watermark_video_frames(frames: List[PIL.Image], watermark_path: str, opacity
     def prepare_watermark(watermark, target_width):
         aspect_ratio = watermark.width / watermark.height
         new_height = int(target_width / aspect_ratio)
-        watermark = watermark.resize((target_width, new_height), Image.LANCZOS)
+        watermark = watermark.resize((target_width, new_height), PIL.Image.LANCZOS)
         return np.array(watermark)
 
     def apply_watermark(frame, watermark, position):
