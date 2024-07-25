@@ -2,7 +2,7 @@
 # A SDXL pipeline can take unlimited weighted prompt
 #
 # Author: Andrew Zhu
-# Github: https://github.com/xhinker
+# GitHub: https://github.com/xhinker
 # Medium: https://medium.com/@xhinker
 ## -----------------------------------------------------------
 
@@ -25,6 +25,7 @@ from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
+<<<<<<< HEAD
     LoraLoaderMixin,
     TextualInversionLoaderMixin,
 )
@@ -34,7 +35,13 @@ from diffusers.models.attention_processor import (
     LoRAAttnProcessor2_0,
     LoRAXFormersAttnProcessor,
     XFormersAttnProcessor,
+=======
+    StableDiffusionLoraLoaderMixin,
+    TextualInversionLoaderMixin,
+>>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 )
+from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel
+from diffusers.models.attention_processor import AttnProcessor2_0, XFormersAttnProcessor
 from diffusers.pipelines.pipeline_utils import StableDiffusionMixin
 from diffusers.pipelines.stable_diffusion_xl.pipeline_output import (
     StableDiffusionXLPipelineOutput,
@@ -571,7 +578,7 @@ class SDXLLongPromptWeightingPipeline(
     StableDiffusionMixin,
     FromSingleFileMixin,
     IPAdapterMixin,
-    LoraLoaderMixin,
+    StableDiffusionLoraLoaderMixin,
     TextualInversionLoaderMixin,
 ):
     r"""
@@ -583,8 +590,8 @@ class SDXLLongPromptWeightingPipeline(
     The pipeline also inherits the following loading methods:
         - [`~loaders.FromSingleFileMixin.from_single_file`] for loading `.ckpt` files
         - [`~loaders.IPAdapterMixin.load_ip_adapter`] for loading IP Adapters
-        - [`~loaders.LoraLoaderMixin.load_lora_weights`] for loading LoRA weights
-        - [`~loaders.LoraLoaderMixin.save_lora_weights`] for saving LoRA weights
+        - [`~loaders.StableDiffusionLoraLoaderMixin.load_lora_weights`] for loading LoRA weights
+        - [`~loaders.StableDiffusionLoraLoaderMixin.save_lora_weights`] for saving LoRA weights
         - [`~loaders.TextualInversionLoaderMixin.load_textual_inversion`] for loading textual inversion embeddings
 
     Args:
@@ -768,7 +775,7 @@ class SDXLLongPromptWeightingPipeline(
 
         # set lora scale so that monkey patched LoRA
         # function of text encoder can correctly access it
-        if lora_scale is not None and isinstance(self, LoraLoaderMixin):
+        if lora_scale is not None and isinstance(self, StableDiffusionLoraLoaderMixin):
             self._lora_scale = lora_scale
 
         if prompt is not None and isinstance(prompt, str):
@@ -1332,12 +1339,7 @@ class SDXLLongPromptWeightingPipeline(
         self.vae.to(dtype=torch.float32)
         use_torch_2_0_or_xformers = isinstance(
             self.vae.decoder.mid_block.attentions[0].processor,
-            (
-                AttnProcessor2_0,
-                XFormersAttnProcessor,
-                LoRAXFormersAttnProcessor,
-                LoRAAttnProcessor2_0,
-            ),
+            (AttnProcessor2_0, XFormersAttnProcessor),
         )
         # if xformers or torch_2_0 is used attention block does not need
         # to be in float32 which can save lots of memory
@@ -2219,7 +2221,7 @@ class SDXLLongPromptWeightingPipeline(
 
     @classmethod
     def save_lora_weights(
-        self,
+        cls,
         save_directory: Union[str, os.PathLike],
         unet_lora_layers: Dict[str, Union[torch.nn.Module, torch.Tensor]] = None,
         text_encoder_lora_layers: Dict[str, Union[torch.nn.Module, torch.Tensor]] = None,
@@ -2242,7 +2244,7 @@ class SDXLLongPromptWeightingPipeline(
             state_dict.update(pack_weights(text_encoder_lora_layers, "text_encoder"))
             state_dict.update(pack_weights(text_encoder_2_lora_layers, "text_encoder_2"))
 
-        self.write_lora_layers(
+        cls.write_lora_layers(
             state_dict=state_dict,
             save_directory=save_directory,
             is_main_process=is_main_process,

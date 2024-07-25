@@ -41,7 +41,7 @@ from transformers import (
 
 import diffusers.optimization
 from diffusers import AmusedPipeline, AmusedScheduler, EMAModel, UVit2DModel, VQModel
-from diffusers.loaders import LoraLoaderMixin
+from diffusers.loaders import AmusedLoraLoaderMixin
 from diffusers.utils import is_wandb_available
 
 
@@ -590,7 +590,7 @@ def main(args):
                 weights.pop()
 
             if transformer_lora_layers_to_save is not None or text_encoder_lora_layers_to_save is not None:
-                LoraLoaderMixin.save_lora_weights(
+                AmusedLoraLoaderMixin.save_lora_weights(
                     output_dir,
                     transformer_lora_layers=transformer_lora_layers_to_save,
                     text_encoder_lora_layers=text_encoder_lora_layers_to_save,
@@ -624,13 +624,19 @@ def main(args):
                 raise ValueError(f"unexpected save model: {model.__class__}")
 
         if transformer is not None or text_encoder_ is not None:
+<<<<<<< HEAD
             lora_state_dict, network_alphas = LoraLoaderMixin.lora_state_dict(input_dir)
             LoraLoaderMixin.load_lora_into_text_encoder(
                 lora_state_dict,
                 network_alphas=network_alphas,
                 text_encoder=text_encoder_,
+=======
+            lora_state_dict, network_alphas = AmusedLoraLoaderMixin.lora_state_dict(input_dir)
+            AmusedLoraLoaderMixin.load_lora_into_text_encoder(
+                lora_state_dict, network_alphas=network_alphas, text_encoder=text_encoder_
+>>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
             )
-            LoraLoaderMixin.load_lora_into_transformer(
+            AmusedLoraLoaderMixin.load_lora_into_transformer(
                 lora_state_dict, network_alphas=network_alphas, transformer=transformer
             )
 

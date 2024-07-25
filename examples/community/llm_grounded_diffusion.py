@@ -37,7 +37,11 @@ from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
+<<<<<<< HEAD
     LoraLoaderMixin,
+=======
+    StableDiffusionLoraLoaderMixin,
+>>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
     TextualInversionLoaderMixin,
 )
 from diffusers.models import AutoencoderKL, UNet2DConditionModel
@@ -285,7 +289,7 @@ class LLMGroundedDiffusionPipeline(
     DiffusionPipeline,
     StableDiffusionMixin,
     TextualInversionLoaderMixin,
-    LoraLoaderMixin,
+    StableDiffusionLoraLoaderMixin,
     IPAdapterMixin,
     FromSingleFileMixin,
 ):
@@ -1277,7 +1281,7 @@ class LLMGroundedDiffusionPipeline(
         """
         # set lora scale so that monkey patched LoRA
         # function of text encoder can correctly access it
-        if lora_scale is not None and isinstance(self, LoraLoaderMixin):
+        if lora_scale is not None and isinstance(self, StableDiffusionLoraLoaderMixin):
             self._lora_scale = lora_scale
 
             # dynamically adjust the LoRA scale
@@ -1411,7 +1415,7 @@ class LLMGroundedDiffusionPipeline(
             negative_prompt_embeds = negative_prompt_embeds.repeat(1, num_images_per_prompt, 1)
             negative_prompt_embeds = negative_prompt_embeds.view(batch_size * num_images_per_prompt, seq_len, -1)
 
-        if isinstance(self, LoraLoaderMixin) and USE_PEFT_BACKEND:
+        if isinstance(self, StableDiffusionLoraLoaderMixin) and USE_PEFT_BACKEND:
             # Retrieve the original scale by scaling back the LoRA layers
             unscale_lora_layers(self.text_encoder, lora_scale)
 

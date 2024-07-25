@@ -23,7 +23,7 @@ from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 
 from diffusers import AutoencoderKL, DiffusionPipeline, UNet2DConditionModel
 from diffusers.configuration_utils import FrozenDict, deprecate
-from diffusers.loaders import LoraLoaderMixin, TextualInversionLoaderMixin
+from diffusers.loaders import StableDiffusionLoraLoaderMixin, TextualInversionLoaderMixin
 from diffusers.pipelines.pipeline_utils import StableDiffusionMixin
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from diffusers.pipelines.stable_diffusion.safety_checker import (
@@ -140,10 +140,14 @@ def prepare_mask_and_masked_image(image, mask):
 
 
 class StableDiffusionRepaintPipeline(
+<<<<<<< HEAD
     DiffusionPipeline,
     StableDiffusionMixin,
     TextualInversionLoaderMixin,
     LoraLoaderMixin,
+=======
+    DiffusionPipeline, StableDiffusionMixin, TextualInversionLoaderMixin, StableDiffusionLoraLoaderMixin
+>>>>>>> 0bda1d7b8906decb420c7e862cea169b58bdc3b8
 ):
     r"""
     Pipeline for text-guided image inpainting using Stable Diffusion. *This is an experimental feature*.
@@ -151,9 +155,9 @@ class StableDiffusionRepaintPipeline(
     library implements for all the pipelines (such as downloading or saving, running on a particular device, etc.)
     In addition the pipeline inherits the following loading methods:
         - *Textual-Inversion*: [`loaders.TextualInversionLoaderMixin.load_textual_inversion`]
-        - *LoRA*: [`loaders.LoraLoaderMixin.load_lora_weights`]
+        - *LoRA*: [`loaders.StableDiffusionLoraLoaderMixin.load_lora_weights`]
     as well as the following saving methods:
-        - *LoRA*: [`loaders.LoraLoaderMixin.save_lora_weights`]
+        - *LoRA*: [`loaders.StableDiffusionLoraLoaderMixin.save_lora_weights`]
     Args:
         vae ([`AutoencoderKL`]):
             Variational Auto-Encoder (VAE) Model to encode and decode images to and from latent representations.
