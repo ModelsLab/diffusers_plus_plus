@@ -154,9 +154,9 @@ def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
 class StableDiffusionXLControlNetUnionInpaintPipeline(
     DiffusionPipeline, 
     StableDiffusionMixin,
-      StableDiffusionXLLoraLoaderMixin,
-        FromSingleFileMixin,
-         IPAdapterMixin
+    StableDiffusionXLLoraLoaderMixin,
+    FromSingleFileMixin,
+    IPAdapterMixin
 ):
     r"""
     Pipeline for text-to-image generation using Stable Diffusion XL.
@@ -219,6 +219,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
 
         if isinstance(controlnet, (list, tuple)):
             controlnet = MultiControlNetModel(controlnet)
+            #controlnet = controlnet.to(dtype=torch.float32)
 
         self.register_modules(
             vae=vae,

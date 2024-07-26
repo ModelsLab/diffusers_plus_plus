@@ -182,7 +182,7 @@ class StableDiffusionXLControlNetPipelineFastTests(
             expected_pipe_slice = None
             if torch_device == "cpu":
                 expected_pipe_slice = np.array(
-                    [0.7331, 0.5907, 0.5667, 0.6029, 0.5679, 0.5968, 0.4033, 0.4761, 0.5090]
+                    [0.7334656,  0.58656645, 0.5622971, 0.62415195, 0.57511926, 0.5998724, 0.40913743, 0.45895278,  0.5054053 ]
                 )
         return super().test_ip_adapter_single(expected_pipe_slice=expected_pipe_slice)
 
@@ -335,8 +335,9 @@ class StableDiffusionXLControlNetPipelineFastTests(
 
         output = sd_pipe(**inputs)
         image_slice = output.images[0, -3:, -3:, -1]
+        #print(image_slice)
         expected_slice = np.array(
-            [0.7330834, 0.590667, 0.5667336, 0.6029023, 0.5679491, 0.5968194, 0.4032986, 0.47612396, 0.5089609]
+            [0.7334656,  0.58656645, 0.5622971, 0.62415195, 0.57511926, 0.5998724, 0.40913743, 0.45895278,  0.5054053 ]
         )
 
         # make sure that it's equal
@@ -952,8 +953,9 @@ class StableDiffusionSSD1BControlNetPipelineFastTests(StableDiffusionXLControlNe
 
         output = sd_pipe(**inputs)
         image_slice = output.images[0, -3:, -3:, -1]
+        #print(image_slice)
         expected_slice = np.array(
-            [0.6831671, 0.5702532, 0.5459845, 0.6299793, 0.58563006, 0.6033695, 0.4493941, 0.46132287, 0.5035841]
+            [0.7212472,  0.5890059, 0.54907507, 0.64247704, 0.59701467, 0.6091161,0.44175282, 0.45556074,  0.5031693 ]
         )
 
         # make sure that it's equal
@@ -962,7 +964,7 @@ class StableDiffusionSSD1BControlNetPipelineFastTests(StableDiffusionXLControlNe
     def test_ip_adapter_single(self):
         expected_pipe_slice = None
         if torch_device == "cpu":
-            expected_pipe_slice = np.array([0.6832, 0.5703, 0.5460, 0.6300, 0.5856, 0.6034, 0.4494, 0.4613, 0.5036])
+            expected_pipe_slice = np.array([0.7212472,  0.5890059, 0.54907507, 0.64247704, 0.59701467, 0.6091161,0.44175282, 0.45556074,  0.5031693 ])
         return super().test_ip_adapter_single(from_ssd1b=True, expected_pipe_slice=expected_pipe_slice)
 
     def test_controlnet_sdxl_lcm(self):

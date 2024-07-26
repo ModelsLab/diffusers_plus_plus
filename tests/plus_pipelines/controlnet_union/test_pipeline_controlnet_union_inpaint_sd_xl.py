@@ -17,11 +17,11 @@ from transformers import (
 
 from diffusers import (
     AutoencoderKL,
-    ControlNetModel,
+    #ControlNetModel,
     EulerDiscreteScheduler,
-    #StableDiffusionXLControlNetInpaintPipeline,
     UNet2DConditionModel,
 )
+from diffusers.plus_models.controlnet_union import ControlNetModel_Union
 from diffusers.plus_pipelines.controlnet_union.pipeline_controlnet_union_inpaint_sd_xl import StableDiffusionXLControlNetUnionInpaintPipeline
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.testing_utils import (
@@ -85,7 +85,7 @@ class ControlNetUnionPipelineSDXLFastTests(
             cross_attention_dim=64,
         )
         torch.manual_seed(0)
-        controlnet = ControlNetModel(
+        controlnet = ControlNetModel_Union(
             block_out_channels=(32, 64),
             layers_per_block=2,
             in_channels=4,
@@ -94,7 +94,7 @@ class ControlNetUnionPipelineSDXLFastTests(
             # SD2-specific config below
             attention_head_dim=(2, 4),
             use_linear_projection=True,
-            addition_embed_type="text_time",
+            addition_embed_type="text_time",    
             addition_time_embed_dim=8,
             transformer_layers_per_block=(1, 2),
             projection_class_embeddings_input_dim=80,  # 6 * 8 + 32
@@ -312,7 +312,7 @@ class ControlNetUnionPipelineSDXLFastTests(
         # ensure the results are not equal
         assert np.abs(image_slice_1.flatten() - image_slice_3.flatten()).max() > 1e-4
 
-    def test_controlnet_sdxl_guess(self):
+    def test_controlnet_union_sdxl_guess(self):
         device = "cpu"
 
         components = self.get_dummy_components()
