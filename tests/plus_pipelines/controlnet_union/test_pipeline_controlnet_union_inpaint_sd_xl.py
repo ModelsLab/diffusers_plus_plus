@@ -17,11 +17,11 @@ from transformers import (
 
 from diffusers import (
     AutoencoderKL,
-    #ControlNetModel,
+    ControlNetModel,
     EulerDiscreteScheduler,
     UNet2DConditionModel,
 )
-from diffusers.plus_models.controlnet_union import ControlNetModel_Union
+
 from diffusers.plus_pipelines.controlnet_union.pipeline_controlnet_union_inpaint_sd_xl import StableDiffusionXLControlNetUnionInpaintPipeline
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.testing_utils import (
@@ -48,7 +48,7 @@ from ..test_pipelines_common import (
 enable_full_determinism()
 
 
-class ControlNetUnionPipelineSDXLFastTests(
+class ControlNetUnionInpaintPipelineSDXLFastTests(
     PipelineLatentTesterMixin, PipelineKarrasSchedulerTesterMixin, PipelineTesterMixin, unittest.TestCase
 ):
     pipeline_class = StableDiffusionXLControlNetUnionInpaintPipeline
@@ -85,7 +85,7 @@ class ControlNetUnionPipelineSDXLFastTests(
             cross_attention_dim=64,
         )
         torch.manual_seed(0)
-        controlnet = ControlNetModel_Union(
+        controlnet = ControlNetModel(
             block_out_channels=(32, 64),
             layers_per_block=2,
             in_channels=4,

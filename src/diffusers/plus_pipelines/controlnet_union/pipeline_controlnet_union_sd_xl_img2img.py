@@ -28,25 +28,25 @@ from transformers import (
     CLIPVisionModelWithProjection,
 )
 
-from ...utils.import_utils import is_invisible_watermark_available
+from diffusers.utils.import_utils import is_invisible_watermark_available
 
-from ...image_processor import PipelineImageInput, VaeImageProcessor
-from ...loaders import (
+from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
+from diffusers.loaders import (
     IPAdapterMixin,
     StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
 )
-from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel,ControlNetModel
-from ...plus_models.controlnet_union import ControlNetModel_Union
-from ...models.attention_processor import (
+from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel,ControlNetModel
+from diffusers.plus_models.controlnet_union import ControlNetModel_Union
+from diffusers.models.attention_processor import (
     AttnProcessor2_0,
     LoRAAttnProcessor2_0,
     LoRAXFormersAttnProcessor,
     XFormersAttnProcessor,
 )
-from ...models.lora import adjust_lora_scale_text_encoder
-from ...schedulers import KarrasDiffusionSchedulers
-from ...utils import (
+from diffusers.models.lora import adjust_lora_scale_text_encoder
+from diffusers.schedulers import KarrasDiffusionSchedulers
+from diffusers.utils import (
     USE_PEFT_BACKEND,
     deprecate,
     logging,
@@ -54,15 +54,15 @@ from ...utils import (
     scale_lora_layers,
     unscale_lora_layers,
 )
-from ...utils.torch_utils import is_compiled_module, randn_tensor
-from ...pipelines.pipeline_utils import DiffusionPipeline, StableDiffusionMixin
-from ...pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
+from diffusers.utils.torch_utils import is_compiled_module, randn_tensor
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline, StableDiffusionMixin
+from diffusers.pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
 
 
 if is_invisible_watermark_available():
-    from ...pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
+    from diffusers.pipelines.stable_diffusion_xl.watermark import StableDiffusionXLWatermarker
 
-from ...pipelines.controlnet.multicontrolnet import MultiControlNetModel
+from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
@@ -586,7 +586,7 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
                     )
                 image_embeds.append(single_image_embeds)
 
-        return image_embeds
+        return image_embeds#it is ip adapter image embeds
 
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_extra_step_kwargs
     def prepare_extra_step_kwargs(self, generator, eta):

@@ -8,11 +8,13 @@ from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProject
 
 from diffusers import (
     AutoencoderKL,
-    ControlNetModel,
+    #ControlNetModel,
     EulerDiscreteScheduler,
-    StableDiffusionXLControlNetImg2ImgPipeline,
+    #StableDiffusionXLControlNetImg2ImgPipeline,
     UNet2DConditionModel,
 )
+from diffusers.plus_models.controlnet_union import ControlNetModel_Union
+from diffusers.plus_pipelines.controlnet_union.pipeline_controlnet_union_sd_xl_img2img import StableDiffusionXLControlNetUnionImg2ImgPipeline
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.testing_utils import enable_full_determinism, floats_tensor, require_torch_gpu, torch_device
 
@@ -40,7 +42,7 @@ class ControlNetPipelineSDXLImg2ImgFastTests(
     PipelineTesterMixin,
     unittest.TestCase,
 ):
-    pipeline_class = StableDiffusionXLControlNetImg2ImgPipeline
+    pipeline_class = StableDiffusionXLControlNetUnionImg2ImgPipeline
     params = TEXT_GUIDED_IMAGE_VARIATION_PARAMS
     required_optional_params = PipelineTesterMixin.required_optional_params - {"latents"}
     batch_params = TEXT_GUIDED_IMAGE_VARIATION_BATCH_PARAMS
@@ -70,7 +72,7 @@ class ControlNetPipelineSDXLImg2ImgFastTests(
             cross_attention_dim=64 if not skip_first_text_encoder else 32,
         )
         torch.manual_seed(0)
-        controlnet = ControlNetModel(
+        controlnet = ControlNetModel_Union(
             block_out_channels=(32, 64),
             layers_per_block=2,
             in_channels=4,
@@ -137,12 +139,15 @@ class ControlNetPipelineSDXLImg2ImgFastTests(
         }
         return components
 
-    def get_dummy_inputs(self, device, seed=0):
+    def get_dummy_inputs(self, device, seed=0,num_control_images=3):
         controlnet_embedder_scale_factor = 2
-        image = floats_tensor(
+        control_image_list = [
+        floats_tensor(
             (1, 3, 32 * controlnet_embedder_scale_factor, 32 * controlnet_embedder_scale_factor),
-            rng=random.Random(seed),
+            rng=random.Random(seed + i),
         ).to(device)
+        for i in range(num_control_images)
+    ]
 
         if str(device).startswith("mps"):
             generator = torch.manual_seed(seed)
@@ -155,17 +160,12 @@ class ControlNetPipelineSDXLImg2ImgFastTests(
             "num_inference_steps": 2,
             "guidance_scale": 6.0,
             "output_type": "np",
-            "image": image,
-            "control_image": image,
+            "image": control_image_list[0],
+            "control_image": control_image_list,
         }
 
         return inputs
-
-    def test_ip_adapter_single(self):
-        expected_pipe_slice = None
-        if torch_device == "cpu":
-            expected_pipe_slice = np.array([0.6265, 0.5441, 0.5384, 0.5446, 0.5810, 0.5908, 0.5414, 0.5428, 0.5353])
-        return super().test_ip_adapter_single(expected_pipe_slice=expected_pipe_slice)
+    
 
     def test_stable_diffusion_xl_controlnet_img2img(self):
         device = "cpu"  # ensure determinism for the device-dependent torch.Generator
@@ -177,6 +177,7 @@ class ControlNetPipelineSDXLImg2ImgFastTests(
         inputs = self.get_dummy_inputs(device)
         image = sd_pipe(**inputs).images
         image_slice = image[0, -3:, -3:, -1]
+        print("Image Slice:",image_slice.flatten())
         assert image.shape == (1, 64, 64, 3)
 
         expected_slice = np.array(
@@ -184,6 +185,14 @@ class ControlNetPipelineSDXLImg2ImgFastTests(
         )
 
         assert np.abs(image_slice.flatten() - expected_slice).max() < 1e-2
+
+    def test_ip_adapter_single(self):
+        expected_pipe_slice = None
+        if torch_device == "cpu":
+            expected_pipe_slice = np.array([0.6276, 0.5271, 0.5205, 0.5393, 0.5774, 0.5872, 0.5456, 0.5415, 0.5354])
+        return super().test_ip_adapter_single(expected_pipe_slice=expected_pipe_slice)
+
+    
 
     def test_stable_diffusion_xl_controlnet_img2img_guess(self):
         device = "cpu"

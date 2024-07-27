@@ -20,6 +20,7 @@ from diffusers import (
 )
 from diffusers.models.unets.unet_2d_blocks import UNetMidBlock2D
 from diffusers.pipelines.controlnet.pipeline_controlnet import MultiControlNetModel
+from diffusers.plus_pipelines.controlnet_union.pipeline_controlnet_union_sd_xl import StableDiffusionXLControlNetUnionPipeline
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.testing_utils import (
     enable_full_determinism,
@@ -56,7 +57,7 @@ class StableDiffusionXLControlNetPipelineFastTests(
     SDXLOptionalComponentsTesterMixin,
     unittest.TestCase,
 ):
-    pipeline_class = StableDiffusionXLControlNetPipeline
+    pipeline_class = StableDiffusionXLControlNetUnionPipeline
     params = TEXT_TO_IMAGE_PARAMS
     batch_params = TEXT_TO_IMAGE_BATCH_PARAMS
     image_params = IMAGE_TO_IMAGE_IMAGE_PARAMS

@@ -196,8 +196,25 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
     """
 
     model_cpu_offload_seq = "text_encoder->text_encoder_2->unet->vae"
-    _optional_components = ["tokenizer", "tokenizer_2", "text_encoder", "text_encoder_2"]
-    _callback_tensor_inputs = ["latents", "prompt_embeds", "negative_prompt_embeds"]
+    _optional_components = [ 
+        "tokenizer",
+        "tokenizer_2",
+        "text_encoder",
+        "text_encoder_2",
+        "image_encoder",
+        "feature_extractor",
+        ]
+    _callback_tensor_inputs = [
+        "latents",
+        "prompt_embeds",
+        "negative_prompt_embeds",
+        "add_text_embeds",
+        "add_time_ids",
+        "negative_pooled_prompt_embeds",
+        "add_neg_time_ids",
+        "mask",
+        "masked_image_latents",
+        ]
 
     def __init__(
         self,
@@ -232,6 +249,8 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
             scheduler=scheduler,
             feature_extractor=feature_extractor,
             image_encoder=image_encoder,
+            #set attn processor
+             
         )
         self.register_to_config(force_zeros_for_empty_prompt=force_zeros_for_empty_prompt)
         self.register_to_config(requires_aesthetics_score=requires_aesthetics_score)
@@ -601,7 +620,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
                 f"image must be passed and be one of PIL image, numpy array, torch tensor, list of PIL images, list of numpy arrays or list of torch tensors, but is {type(image)}"
             )
 
-        if image_is_pil or image_is_np:
+        if image_is_pil:
             image_batch_size = 1
         else:
             image_batch_size = len(image)
@@ -745,6 +764,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
             and isinstance(self.controlnet._orig_mod, ControlNetModel)
         ):
             self.check_image(image, prompt, prompt_embeds)
+        #for controlnet model union
         elif (
             isinstance(self.controlnet, ControlNetModel_Union)
             or is_compiled
@@ -1512,23 +1532,24 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
         init_image = init_image.to(dtype=torch.float32)
 
         # 5.2 Prepare control images 
+        #if isinstance(controlnet, MultiControlNetModel):
         for idx in range(len(control_image_list)):
-            if control_image_list[idx]:
-                control_image = self.prepare_control_image(
-                    image=control_image_list[idx],
-                    width=width,
-                    height=height,
-                    batch_size=batch_size * num_images_per_prompt,
-                    num_images_per_prompt=num_images_per_prompt,
-                    device=device,
-                    dtype=controlnet.dtype,
-                    crops_coords=crops_coords,
-                    resize_mode=resize_mode,
-                    do_classifier_free_guidance=self.do_classifier_free_guidance,
-                    guess_mode=guess_mode,
-                )
-                height, width = control_image.shape[-2:]
-                control_image_list[idx] = control_image
+                if control_image_list[idx]:
+                    control_image = self.prepare_control_image(
+                        image=control_image_list[idx],
+                        width=width,
+                        height=height,
+                        batch_size=batch_size * num_images_per_prompt,
+                        num_images_per_prompt=num_images_per_prompt,
+                        device=device,
+                        dtype=controlnet.dtype,
+                        crops_coords=crops_coords,
+                        resize_mode=resize_mode,
+                        do_classifier_free_guidance=self.do_classifier_free_guidance,
+                        guess_mode=guess_mode,
+                    )
+                    height, width = control_image.shape[-2:]
+                    control_image_list[idx] = control_image
 
 
         # 5.3 Prepare mask
