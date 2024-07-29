@@ -244,7 +244,7 @@ class StableDiffusionControlNetPipeline(
             controlnet=controlnet,
             scheduler=scheduler,
             safety_checker=safety_checker,
-          feature_extractor  =feature_extractor,
+            feature_extractor=feature_extractor,
             image_encoder=image_encoder,
         )
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
