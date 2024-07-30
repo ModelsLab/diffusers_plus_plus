@@ -32,7 +32,7 @@ if is_torch_available():
 if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
     if is_torch_available():
         from .ella import ELLA, ELLAProxyUNet
-        from .controlnet_union import ControlNetModel_Union
+        from .controlnet_union import ControlNetModelUnion
 
 else:
     import sys

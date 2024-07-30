@@ -40,7 +40,7 @@ from ...loaders import (
     TextualInversionLoaderMixin,
 )
 from ...models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel
-from ...plus_models.controlnet_union import ControlNetModel_Union
+from ...plus_models.controlnet_union import ControlNetModelUnion
 from ...models.attention_processor import (
     AttnProcessor2_0,
     LoRAAttnProcessor2_0,
@@ -258,7 +258,7 @@ class StableDiffusionXLControlNetUnionPipeline(
         tokenizer: CLIPTokenizer,
         tokenizer_2: CLIPTokenizer,
         unet: UNet2DConditionModel,
-        controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel, ControlNetModel_Union],
+        controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel, ControlNetModelUnion],
         scheduler: KarrasDiffusionSchedulers,
         force_zeros_for_empty_prompt: bool = True,
         add_watermarker: Optional[bool] = None,
@@ -756,9 +756,9 @@ class StableDiffusionXLControlNetUnionPipeline(
         ):
             self.check_image(image, prompt, prompt_embeds)
         elif (
-            isinstance(self.controlnet, ControlNetModel_Union)
+            isinstance(self.controlnet, ControlNetModelUnion)
             or is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetModel_Union)
+            and isinstance(self.controlnet._orig_mod, ControlNetModelUnion)
         ):
             self.check_image(image, prompt, prompt_embeds)
         elif (
@@ -793,9 +793,9 @@ class StableDiffusionXLControlNetUnionPipeline(
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
             #xinsir
         elif (
-            isinstance(self.controlnet, ControlNetModel_Union)
+            isinstance(self.controlnet, ControlNetModelUnion)
             or is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetModel_Union)
+            and isinstance(self.controlnet._orig_mod, ControlNetModelUnion)
         ):
             if not isinstance(controlnet_conditioning_scale, float):
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
@@ -1325,7 +1325,7 @@ class StableDiffusionXLControlNetUnionPipeline(
         global_pool_conditions = (
             controlnet.config.global_pool_conditions
             #recheck wih shauray
-            if isinstance(controlnet, ControlNetModel_Union)
+            if isinstance(controlnet, ControlNetModelUnion)
             else controlnet.nets[0].config.global_pool_conditions
         )
         guess_mode = guess_mode or global_pool_conditions
@@ -1365,7 +1365,7 @@ class StableDiffusionXLControlNetUnionPipeline(
                 self.do_classifier_free_guidance,
             )
         #xinsir
-        assert isinstance(controlnet, ControlNetModel_Union)
+        assert isinstance(controlnet, ControlNetModelUnion)
         # 4. Prepare image#check these with shauray
         if isinstance(controlnet, ControlNetModel):
             image = self.prepare_image(
@@ -1401,7 +1401,7 @@ class StableDiffusionXLControlNetUnionPipeline(
             image = images
             height, width = image[0].shape[-2:]
         #i changed this
-        elif isinstance(controlnet,ControlNetModel_Union):
+        elif isinstance(controlnet,ControlNetModelUnion):
             image = self.prepare_image(
                 image=image,
                 width=width,
@@ -1453,7 +1453,7 @@ class StableDiffusionXLControlNetUnionPipeline(
                 1.0 - float(i / len(timesteps) < s or (i + 1) / len(timesteps) > e)
                 for s, e in zip(control_guidance_start, control_guidance_end)
             ]
-            controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModel_Union) else keeps)
+            controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModelUnion) else keeps)
 
         # 7.2 Prepare added time ids & embeddings
         if isinstance(image, list):

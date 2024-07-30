@@ -150,7 +150,7 @@ class ControlNetConditioningEmbedding(nn.Module):
         return embedding
 
 #only class name changed
-class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalModelMixin):
+class ControlNetModelUnion(ModelMixin, ConfigMixin, FromOriginalModelMixin):
     """
     A ControlNet model.
 

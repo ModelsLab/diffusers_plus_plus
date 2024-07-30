@@ -36,7 +36,7 @@ from ...loaders import (
     TextualInversionLoaderMixin,
 )
 
-from ...plus_models.controlnet_union import ControlNetModel_Union
+from ...plus_models.controlnet_union import ControlNetModelUnion
 
 from ...models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel
 from ...models.attention_processor import (
@@ -764,9 +764,9 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
             self.check_image(image, prompt, prompt_embeds)
         #xinsir copy
         elif (
-            isinstance(self.controlnet, ControlNetModel_Union)
+            isinstance(self.controlnet, ControlNetModelUnion)
             or is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetModel_Union)
+            and isinstance(self.controlnet._orig_mod, ControlNetModelUnion)
         ):
             self.check_image(image, prompt, prompt_embeds)
         elif (
@@ -801,9 +801,9 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
         
         elif (
-            isinstance(self.controlnet, ControlNetModel_Union)
+            isinstance(self.controlnet, ControlNetModelUnion)
             or is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetModel_Union)
+            and isinstance(self.controlnet._orig_mod, ControlNetModelUnion)
         ):
             if not isinstance(controlnet_conditioning_scale, float):
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
@@ -1580,7 +1580,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
 
             control_image = control_images
             
-        elif isinstance(controlnet, ControlNetModel_Union):
+        elif isinstance(controlnet, ControlNetModelUnion):
             control_image = self.prepare_control_image(
                 image=control_image,
                 width=width,

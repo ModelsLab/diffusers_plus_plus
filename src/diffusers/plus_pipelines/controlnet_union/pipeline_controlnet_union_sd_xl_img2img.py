@@ -38,7 +38,7 @@ from ...loaders import (
     StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
 )
-from ...plus_models.controlnet_union import ControlNetModel_Union
+from ...plus_models.controlnet_union import ControlNetModelUnion
 from ...models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel
 from ...models.attention_processor import (
     AttnProcessor2_0,
@@ -723,9 +723,9 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
             self.check_image(image, prompt, prompt_embeds)
         #xinsir
         elif (
-            isinstance(self.controlnet, ControlNetModel_Union)
+            isinstance(self.controlnet, ControlNetModelUnion)
             or is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetModel_Union)
+            and isinstance(self.controlnet._orig_mod, ControlNetModelUnion)
         ):
             self.check_image(image, prompt, prompt_embeds)
 
@@ -761,9 +761,9 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
         #xinsir
         elif (
-            isinstance(self.controlnet, ControlNetModel_Union)
+            isinstance(self.controlnet, ControlNetModelUnion)
             or is_compiled
-            and isinstance(self.controlnet._orig_mod, ControlNetModel_Union)
+            and isinstance(self.controlnet._orig_mod, ControlNetModelUnion)
         ):
             if not isinstance(controlnet_conditioning_scale, float):
                 raise TypeError("For single controlnet: `controlnet_conditioning_scale` must be type `float`.")
@@ -1379,7 +1379,7 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
 
         global_pool_conditions = (
             controlnet.config.global_pool_conditions
-            if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModel_Union)
+            if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModelUnion)
             else controlnet.nets[0].config.global_pool_conditions
         )
         guess_mode = guess_mode or global_pool_conditions
@@ -1456,7 +1456,7 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
             control_image = control_images
             height, width = control_image[0].shape[-2:]
 
-        elif isinstance(controlnet, ControlNetModel_Union):
+        elif isinstance(controlnet, ControlNetModelUnion):
             control_image = self.prepare_control_image(
                 image=control_image,
                 width=width,
@@ -1501,7 +1501,7 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
                 1.0 - float(i / len(timesteps) < s or (i + 1) / len(timesteps) > e)
                 for s, e in zip(control_guidance_start, control_guidance_end)
             ]
-            controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModel_Union) else keeps)
+            controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModelUnion) else keeps)
 
         # 7.2 Prepare added time ids & embeddings
         if isinstance(control_image, list):
