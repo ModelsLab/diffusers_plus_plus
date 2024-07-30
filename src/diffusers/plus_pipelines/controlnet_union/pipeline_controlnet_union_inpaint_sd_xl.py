@@ -578,7 +578,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
             single_image_embeds = single_image_embeds.to(device=device)
             ip_adapter_image_embeds.append(single_image_embeds)
 
-        return ip_adapter_image_embeds#is equivalent to image embeds
+        return ip_adapter_image_embeds
 
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_extra_step_kwargs
     def prepare_extra_step_kwargs(self, generator, eta):
@@ -1422,31 +1422,33 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
             )
 
         # 1. Check inputs
-        for ind in control_image:
-            if ind:
-                self.check_inputs(
-                    prompt,
-                    prompt_2,
-                    ind,
-                    mask_image,
-                    strength,
-                    num_inference_steps,
-                    callback_steps,
-                    output_type,
-                    negative_prompt,
-                    negative_prompt_2,
-                    prompt_embeds,
-                    negative_prompt_embeds,
-                    ip_adapter_image,
-                    ip_adapter_image_embeds,
-                    pooled_prompt_embeds,
-                    negative_pooled_prompt_embeds,
-                    controlnet_conditioning_scale,
-                    control_guidance_start,
-                    control_guidance_end,
-                    callback_on_step_end_tensor_inputs,
-                    padding_mask_crop,
-                )
+        # for ind in control_image:
+        print(type(control_image))
+        print("le bhsdk:",control_image)
+        #     if ind:
+        self.check_inputs(
+            prompt,
+            prompt_2,
+            control_image,
+            mask_image,
+            strength,
+            num_inference_steps,
+            callback_steps,
+            output_type,
+            negative_prompt,
+            negative_prompt_2,
+            prompt_embeds,
+            negative_prompt_embeds,
+            ip_adapter_image,
+            ip_adapter_image_embeds,
+            pooled_prompt_embeds,
+            negative_pooled_prompt_embeds,
+            controlnet_conditioning_scale,
+            control_guidance_start,
+            control_guidance_end,
+            callback_on_step_end_tensor_inputs,
+            padding_mask_crop,
+        )
 
         self._guidance_scale = guidance_scale
         self._clip_skip = clip_skip
@@ -1540,6 +1542,7 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
         )
         init_image = init_image.to(dtype=torch.float32)
 
+
         # 5.2 Prepare control images
         if isinstance(controlnet, ControlNetModel):
             control_image = self.prepare_control_image(
@@ -1576,25 +1579,23 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
                 control_images.append(control_image_)
 
             control_image = control_images
+            
         elif isinstance(controlnet, ControlNetModel_Union):
-            for idx in range(len(control_image)):
-                if control_image[idx]:
-                    control_image = self.prepare_control_image(
-                        image=control_image[idx],
-                        width=width,
-                        height=height,
-                        batch_size=batch_size * num_images_per_prompt,
-                        num_images_per_prompt=num_images_per_prompt,
-                        device=device,
-                        dtype=controlnet.dtype,
-                        crops_coords=crops_coords,
-                        resize_mode=resize_mode,
-                        do_classifier_free_guidance=self.do_classifier_free_guidance,
-                        guess_mode=guess_mode,
-                    )
-                    height, width = control_image.shape[-2:]
-                    control_image[idx] = control_image
-
+            control_image = self.prepare_control_image(
+                image=control_image,
+                width=width,
+                height=height,
+                batch_size=batch_size * num_images_per_prompt,
+                num_images_per_prompt=num_images_per_prompt,
+                device=device,
+                dtype=controlnet.dtype,
+                crops_coords=crops_coords,
+                resize_mode=resize_mode,
+                do_classifier_free_guidance=self.do_classifier_free_guidance,
+                guess_mode=guess_mode,
+            )
+            # print(type(control_image))
+            # print("le bhsdk:",control_image)
 
         else:
             raise ValueError(f"{controlnet.__class__} is not supported.")

@@ -739,7 +739,7 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         sample: torch.Tensor,
         timestep: Union[torch.Tensor, float, int],
         encoder_hidden_states: torch.Tensor,
-        controlnet_cond: torch.FloatTensor,
+        controlnet_cond: torch.FloatTensor,#list
         conditioning_scale: float = 1.0,
         class_labels: Optional[torch.Tensor] = None,
         timestep_cond: Optional[torch.Tensor] = None,
@@ -882,28 +882,27 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
         # 2. pre-process
         sample = self.conv_in(sample)
-        #xinsir
         indices = torch.nonzero(control_type[0])
-        #xinsir
-
         # Copyright by Qi Xin(2024/07/06)
         # add single/multi conditons to input image.
         # Condition Transformer provides an easy and effective way to fuse different features naturally
         inputs = []
         condition_list = []
-
+        #indices = [0., 0., 0., 0., 0., 0., 1., 0.]
+        controlnet_cond_list = []
+        for type in control_type[0]:
+            controlnet_cond_list.append(type*controlnet_cond)
         for idx in range(indices.shape[0] + 1):
             if idx == indices.shape[0]:
                 controlnet_cond = sample
                 feat_seq = torch.mean(controlnet_cond, dim=(2, 3)) # N * C
             else:
-                #ind=individual
-                controlnet_cond_ind = self.controlnet_cond_embedding(controlnet_cond[indices[idx][0]])
+                controlnet_cond = self.controlnet_cond_embedding(controlnet_cond_list[indices[idx][0]])
                 feat_seq = torch.mean(controlnet_cond, dim=(2, 3)) # N * C
                 feat_seq = feat_seq + self.task_embedding[indices[idx][0]]
 
             inputs.append(feat_seq.unsqueeze(1))
-            condition_list.append(controlnet_cond_ind)
+            condition_list.append(controlnet_cond)
 
         x = torch.cat(inputs, dim=1)  # NxLxC
         x = self.transformer_layes(x)
@@ -915,10 +914,6 @@ class ControlNetModel_Union(ModelMixin, ConfigMixin, FromOriginalModelMixin):
             controlnet_cond_fuser += condition_list[idx] + alpha
         
         sample = sample + controlnet_cond_fuser
-
-
-        controlnet_cond = self.controlnet_cond_embedding(controlnet_cond)
-        sample = sample
 
         # 3. down
         down_block_res_samples = (sample,)

@@ -1337,28 +1337,28 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
             )
 
         # 1. Check inputs. Raise error if not correct
-        for ind in control_image:
-            if ind:
-                self.check_inputs(
-                    prompt,
-                    prompt_2,
-                    ind,
-                    strength,
-                    num_inference_steps,
-                    callback_steps,
-                    negative_prompt,
-                    negative_prompt_2,
-                    prompt_embeds,
-                    negative_prompt_embeds,
-                    pooled_prompt_embeds,
-                    negative_pooled_prompt_embeds,
-                    ip_adapter_image,
-                    ip_adapter_image_embeds,
-                    controlnet_conditioning_scale,
-                    control_guidance_start,
-                    control_guidance_end,
-                    callback_on_step_end_tensor_inputs,
-                )
+        # for ind in control_image:
+        #     if ind:
+        self.check_inputs(
+            prompt,
+            prompt_2,
+            control_image,
+            strength,
+            num_inference_steps,
+            callback_steps,
+            negative_prompt,
+            negative_prompt_2,
+            prompt_embeds,
+            negative_prompt_embeds,
+            pooled_prompt_embeds,
+            negative_pooled_prompt_embeds,
+            ip_adapter_image,
+            ip_adapter_image_embeds,
+            controlnet_conditioning_scale,
+            control_guidance_start,
+            control_guidance_end,
+            callback_on_step_end_tensor_inputs,
+        )
 
         self._guidance_scale = guidance_scale
         self._clip_skip = clip_skip
@@ -1419,7 +1419,7 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
                 self.do_classifier_free_guidance,
             )
 
-        # 4. Prepare image and controlnet_conditioning_image
+        #4. Prepare image and controlnet_conditioning_image
         image = self.image_processor.preprocess(image, height=height, width=width).to(dtype=torch.float32)
 
         if isinstance(controlnet, ControlNetModel):
@@ -1457,21 +1457,18 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
             height, width = control_image[0].shape[-2:]
 
         elif isinstance(controlnet, ControlNetModel_Union):
-            for idx in range(len(control_image)):
-                if control_image[idx]:
-                    control_image = self.prepare_control_image(
-                        image=control_image[idx],
-                        width=width,
-                        height=height,
-                        batch_size=batch_size * num_images_per_prompt,
-                        num_images_per_prompt=num_images_per_prompt,
-                        device=device,
-                        dtype=controlnet.dtype,
-                        do_classifier_free_guidance=self.do_classifier_free_guidance,
-                        guess_mode=guess_mode,
-                    )
-                    height, width = control_image.shape[-2:]
-                    control_image[idx] = control_image
+            control_image = self.prepare_control_image(
+                image=control_image,
+                width=width,
+                height=height,
+                batch_size=batch_size * num_images_per_prompt,
+                num_images_per_prompt=num_images_per_prompt,
+                device=device,
+                dtype=controlnet.dtype,
+                do_classifier_free_guidance=self.do_classifier_free_guidance,
+                guess_mode=guess_mode,
+            )
+            height, width = control_image.shape[-2:]
         else:
             assert False
 
@@ -1504,7 +1501,7 @@ class StableDiffusionXLControlNetUnionImg2ImgPipeline(
                 1.0 - float(i / len(timesteps) < s or (i + 1) / len(timesteps) > e)
                 for s, e in zip(control_guidance_start, control_guidance_end)
             ]
-            controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) else keeps)
+            controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) or isinstance(controlnet, ControlNetModel_Union) else keeps)
 
         # 7.2 Prepare added time ids & embeddings
         if isinstance(control_image, list):

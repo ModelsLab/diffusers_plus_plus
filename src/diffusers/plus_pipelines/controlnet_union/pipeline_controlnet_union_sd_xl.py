@@ -16,6 +16,7 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import os
 import numpy as np
 import PIL.Image
 import torch
@@ -257,7 +258,7 @@ class StableDiffusionXLControlNetUnionPipeline(
         tokenizer: CLIPTokenizer,
         tokenizer_2: CLIPTokenizer,
         unet: UNet2DConditionModel,
-        controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel],
+        controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel, ControlNetModel_Union],
         scheduler: KarrasDiffusionSchedulers,
         force_zeros_for_empty_prompt: bool = True,
         add_watermarker: Optional[bool] = None,
@@ -754,7 +755,6 @@ class StableDiffusionXLControlNetUnionPipeline(
             and isinstance(self.controlnet._orig_mod, ControlNetModel)
         ):
             self.check_image(image, prompt, prompt_embeds)
-            #xinsir
         elif (
             isinstance(self.controlnet, ControlNetModel_Union)
             or is_compiled
@@ -1284,26 +1284,25 @@ class StableDiffusionXLControlNetUnionPipeline(
             )
 
         # 1. Check inputs. Raise error if not correct
-        for ind in image:
-            if ind:
-                self.check_inputs(
-                    prompt,
-                    prompt_2,
-                    ind,
-                    callback_steps,
-                    negative_prompt,
-                    negative_prompt_2,
-                    prompt_embeds,
-                    negative_prompt_embeds,
-                    pooled_prompt_embeds,
-                    ip_adapter_image,
-                    ip_adapter_image_embeds,
-                    negative_pooled_prompt_embeds,
-                    controlnet_conditioning_scale,
-                    control_guidance_start,
-                    control_guidance_end,
-                    callback_on_step_end_tensor_inputs,
-                )
+
+        self.check_inputs(
+            prompt,
+            prompt_2,
+            image,
+            callback_steps,
+            negative_prompt,
+            negative_prompt_2,
+            prompt_embeds,
+            negative_prompt_embeds,
+            pooled_prompt_embeds,
+            ip_adapter_image,
+            ip_adapter_image_embeds,
+            negative_pooled_prompt_embeds,
+            controlnet_conditioning_scale,
+            control_guidance_start,
+            control_guidance_end,
+            callback_on_step_end_tensor_inputs,
+        )
 
         self._guidance_scale = guidance_scale
         self._clip_skip = clip_skip
@@ -1403,21 +1402,17 @@ class StableDiffusionXLControlNetUnionPipeline(
             height, width = image[0].shape[-2:]
         #i changed this
         elif isinstance(controlnet,ControlNetModel_Union):
-            for idx in range(len(image)):
-                if image[idx]:
-                    image = self.prepare_image(
-                        image=image[idx],
-                        width=width,
-                        height=height,
-                        batch_size=batch_size * num_images_per_prompt,
-                        num_images_per_prompt=num_images_per_prompt,
-                        device=device,
-                        dtype=controlnet.dtype,
-                        do_classifier_free_guidance=self.do_classifier_free_guidance,
-                        guess_mode=guess_mode,
-                    )
-                    height, width = image.shape[-2:]
-                    image[idx] = image
+            image = self.prepare_image(
+                image=image,
+                width=width,
+                height=height,
+                batch_size=batch_size * num_images_per_prompt,
+                num_images_per_prompt=num_images_per_prompt,
+                device=device,
+                dtype=controlnet.dtype,
+                do_classifier_free_guidance=self.do_classifier_free_guidance,
+                guess_mode=guess_mode,
+            )
         else:
             assert False
 
@@ -1534,7 +1529,7 @@ class StableDiffusionXLControlNetUnionPipeline(
                 latent_model_input = torch.cat([latents] * 2) if self.do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
-                added_cond_kwargs = {"text_embeds": add_text_embeds, "time_ids": add_time_ids}
+                added_cond_kwargs = {"text_embeds": add_text_embeds, "time_ids": add_time_ids, "control_type":union_control_type.reshape(1, -1).to(device, dtype=prompt_embeds.dtype).repeat(batch_size * num_images_per_prompt * 2, 1)}
 
                 # controlnet(s) inference
                 if guess_mode and self.do_classifier_free_guidance:
@@ -1545,6 +1540,7 @@ class StableDiffusionXLControlNetUnionPipeline(
                     controlnet_added_cond_kwargs = {
                         "text_embeds": add_text_embeds.chunk(2)[1],
                         "time_ids": add_time_ids.chunk(2)[1],
+                        
                     }
                 else:
                     control_model_input = latent_model_input
