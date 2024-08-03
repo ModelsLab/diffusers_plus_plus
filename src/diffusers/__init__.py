@@ -281,6 +281,7 @@ else:
             "KandinskyV22PriorEmb2EmbPipeline",
             "KandinskyV22PriorPipeline",
             "KolorsImg2ImgPipeline",
+            "KolorsPAGPipeline",
             "KolorsPipeline",
             "LatentConsistencyModelImg2ImgPipeline",
             "LatentConsistencyModelPipeline",
@@ -372,6 +373,9 @@ else:
         [
             "EllaFixedDiffusionPipeline",
             "EllaFlexDiffusionPipeline",
+            "StableDiffusionXLControlNetUnionInpaintPipeline",
+            "StableDiffusionXLControlNetUnionImg2ImgPipeline",
+            "StableDiffusionXLControlNetUnionPipeline"
         ]
     )
 
@@ -659,6 +663,10 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
         from plus_pipelines import (
             EllaFixedDiffusionPipeline,
             EllaFlexDiffusionPipeline,
+            StableDiffusionXLControlNetUnionInpaintPipeline,
+            StableDiffusionXLControlNetUnionImg2ImgPipeline,
+            StableDiffusionXLControlNetUnionPipeline
+
         )
 
         from .pipelines import (
@@ -709,6 +717,7 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
             KandinskyV22PriorEmb2EmbPipeline,
             KandinskyV22PriorPipeline,
             KolorsImg2ImgPipeline,
+            KolorsPAGPipeline,
             KolorsPipeline,
             LatentConsistencyModelImg2ImgPipeline,
             LatentConsistencyModelPipeline,

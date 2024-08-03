@@ -26,11 +26,13 @@ _import_structure = {}
 
 if is_torch_available():
     _import_structure["ella"] = ["ELLA", "ELLAProxyUNet"]
+    _import_structure["ControlNetModelUnion"] = ["ControlNetModelUnion"]
 
 
 if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
     if is_torch_available():
         from .ella import ELLA, ELLAProxyUNet
+        from .controlnet_union import ControlNetModelUnion
 
 else:
     import sys

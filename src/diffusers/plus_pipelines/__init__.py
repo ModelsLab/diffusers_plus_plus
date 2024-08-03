@@ -55,6 +55,11 @@ else:
         "EllaFixedDiffusionPipeline",
         "EllaFlexDiffusionPipeline",
     ]
+    _import_structure["controlnet_union"] = [
+         "StableDiffusionXLControlNetUnionInpaintPipeline",
+        "StableDiffusionXLControlNetUnionImg2ImgPipeline",
+        "StableDiffusionXLControlNetUnionPipeline"
+    ]
 
 if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
     try:
@@ -64,6 +69,11 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
         from ..utils.dummy_torch_and_transformers_objects import *
     else:
         from .ella import EllaFixedDiffusionPipeline, EllaFlexDiffusionPipeline
+        from .controlnet_union  import (
+            StableDiffusionXLControlNetUnionInpaintPipeline,
+            StableDiffusionXLControlNetUnionImg2ImgPipeline,
+            StableDiffusionXLControlNetUnionPipeline
+        )
 
 else:
     import sys
