@@ -262,7 +262,7 @@ class ControlNetModelUnion(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         global_pool_conditions: bool = False,
         addition_embed_type_num_heads: int = 64,
         #xinsir
-        num_control_type = 6,
+        num_control_type = 8,
     ):
         super().__init__()
 

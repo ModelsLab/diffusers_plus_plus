@@ -1394,16 +1394,16 @@ class StableDiffusionXLControlNetUnionInpaintPipeline(
         controlnet = self.controlnet._orig_mod if is_compiled_module(self.controlnet) else self.controlnet
 
         # align format for control guidance
-        if not isinstance(control_guidance_start, list) and isinstance(control_guidance_end, list):
-            control_guidance_start = len(control_guidance_end) * [control_guidance_start]
-        elif not isinstance(control_guidance_end, list) and isinstance(control_guidance_start, list):
-            control_guidance_end = len(control_guidance_start) * [control_guidance_end]
-        elif not isinstance(control_guidance_start, list) and not isinstance(control_guidance_end, list):
-            mult = len(controlnet.nets) if isinstance(controlnet, MultiControlNetModel) else 1
-            control_guidance_start, control_guidance_end = (
-                mult * [control_guidance_start],
-                mult * [control_guidance_end],
-            )
+        # if not isinstance(control_guidance_start, list) and isinstance(control_guidance_end, list):
+        #     control_guidance_start = len(control_guidance_end) * [control_guidance_start]
+        # elif not isinstance(control_guidance_end, list) and isinstance(control_guidance_start, list):
+        #     control_guidance_end = len(control_guidance_start) * [control_guidance_end]
+        # elif not isinstance(control_guidance_start, list) and not isinstance(control_guidance_end, list):
+        #     mult = len(controlnet.nets) if isinstance(controlnet, MultiControlNetModel) else 1
+        #     control_guidance_start, control_guidance_end = (
+        #         mult * [control_guidance_start],
+        #         mult * [control_guidance_end],
+        #     )
 
         # # 0.0 Default height and width to unet
         # height = height or self.unet.config.sample_size * self.vae_scale_factor

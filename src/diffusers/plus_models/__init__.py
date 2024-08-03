@@ -26,7 +26,7 @@ _import_structure = {}
 
 if is_torch_available():
     _import_structure["ella"] = ["ELLA", "ELLAProxyUNet"]
-    _import_structure["controlnet_union"] = ["ControlNetModelUnion"]
+    _import_structure["ControlNetModelUnion"] = ["ControlNetModelUnion"]
 
 
 if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
