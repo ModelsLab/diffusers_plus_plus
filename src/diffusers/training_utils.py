@@ -526,7 +526,6 @@ class EMAModel:
         r"""
         Args:
         Restore the parameters stored with the `store` method. Useful to validate the model with EMA parameters without:
-            
         affecting the original optimization process. Store the parameters before the `copy_to()` method. After
         validation (or model saving), use this to restore the former parameters.
             parameters: Iterable of `torch.nn.Parameter`; the parameters to be
