@@ -838,7 +838,10 @@ class KolorsPAGPipeline(
                 The adaptive scale factor for the perturbed attention guidance. If it is set to 0.0, `pag_scale` is
                 used.
             max_sequence_length (`int` defaults to 256): Maximum sequence length to use with the `prompt`.
-        Examples: Returns:
+        
+        Examples: 
+
+        Returns:
             [`~pipelines.kolors.KolorsPipelineOutput`] or `tuple`: [`~pipelines.kolors.KolorsPipelineOutput`] if
             `return_dict` is True, otherwise a `tuple`. When returning a tuple, the first element is a list with the
             generated images.
