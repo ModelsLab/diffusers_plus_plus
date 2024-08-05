@@ -687,7 +687,8 @@ class LattePipeline(DiffusionPipeline):
                 be installed. If the dependencies are not installed, the embeddings will be created from the raw
                 prompt.
             mask_feature (`bool` defaults to `True`): If set to `True`, the text embeddings will be masked.
-            enable_temporal_attentions (`bool`, *optional*, defaults to `True`): Whether to enable temporal attentions
+            enable_temporal_attentions (`bool`, *optional*, defaults to `True`):
+                Whether to enable temporal attentions
             decode_chunk_size (`int`, *optional*):
                 The number of frames to decode at a time. Higher chunk size leads to better temporal consistency at the
                 expense of more memory usage. By default, the decoder decodes all frames at once for maximal quality.
