@@ -106,7 +106,7 @@ jobs:
       run: |
         python -m venv /opt/venv && export PATH="/opt/venv/bin:$PATH"
         pip install uv
-        python -m uv pip install -e [quality,test]
+        python -m uv pip install -e [test, quality]
         python -m uv pip install accelerate
 
     - name: Environment
