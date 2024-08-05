@@ -40,8 +40,8 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
     else:
         from .pipeline_pag_controlnet_sd import StableDiffusionControlNetPAGPipeline
         from .pipeline_pag_controlnet_sd_xl import StableDiffusionXLControlNetPAGPipeline
-        from .pipeline_pag_sd import StableDiffusionPAGPipeline
         from .pipeline_pag_kolors import KolorsPAGPipeline
+        from .pipeline_pag_sd import StableDiffusionPAGPipeline
         from .pipeline_pag_sd_xl import StableDiffusionXLPAGPipeline
         from .pipeline_pag_sd_xl_img2img import StableDiffusionXLPAGImg2ImgPipeline
         from .pipeline_pag_sd_xl_inpaint import StableDiffusionXLPAGInpaintPipeline

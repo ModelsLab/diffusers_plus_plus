@@ -140,13 +140,10 @@ class KolorsPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
         # TODO (Alvaro) need to fix later
         pass
 
-
     # throws AttributeError: property 'eos_token' of 'ChatGLMTokenizer' object has no setter
     # not sure if it is worth to fix it before integrating it to transformers
     def test_save_load_float16(self):
         super().test_save_load_float16(expected_max_diff=2e-1)
-
-    
 
     def test_inference_batch_single_identical(self):
         self._test_inference_batch_single_identical(expected_max_diff=5e-4)

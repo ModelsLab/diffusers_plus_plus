@@ -48,6 +48,7 @@ EXAMPLE_DOC_STRING = """
         ```py
         >>> import torch
         >>> from diffusers import AutoPipelineForText2Image
+
         >>> pipe = AutoPipelineForText2Image.from_pretrained(
         ...     "Kwai-Kolors/Kolors-diffusers",
         ...     variant="fp16",
@@ -76,6 +77,7 @@ def retrieve_timesteps(
     """
     Calls the scheduler's `set_timesteps` method and retrieves timesteps from the scheduler after the call. Handles
     custom timesteps. Any kwargs will be supplied to `scheduler.set_timesteps`.
+
     Args:
         scheduler (`SchedulerMixin`):
             The scheduler to get timesteps from.
@@ -90,6 +92,7 @@ def retrieve_timesteps(
         sigmas (`List[float]`, *optional*):
             Custom sigmas used to override the timestep spacing strategy of the scheduler. If `sigmas` is passed,
             `num_inference_steps` and `timesteps` must be `None`.
+
     Returns:
         `Tuple[torch.Tensor, int]`: A tuple where the first element is the timestep schedule from the scheduler and the
         second element is the number of inference steps.
@@ -126,13 +129,13 @@ class KolorsPAGPipeline(
     DiffusionPipeline, StableDiffusionMixin, StableDiffusionXLLoraLoaderMixin, IPAdapterMixin, PAGMixin
 ):
     r"""
-    Pipeline for text-to-image generation using Kolors.
-    This model inherits from [`DiffusionPipeline`]. Check the superclass documentation for the generic methods the
-    library implements for all the pipelines (such as downloading or saving, running on a particular device, etc.)
-    The pipeline also inherits the following loading methods:
+    Pipeline for text-to-image generation using Kolors. This model inherits from [`DiffusionPipeline`]. Check the
+    superclass documentation for the generic methods the library implements for all the pipelines (such as downloading
+    or saving, running on a particular device, etc.) The pipeline also inherits the following loading methods:
         - [`~loaders.StableDiffusionXLLoraLoaderMixin.load_lora_weights`] for loading LoRA weights
         - [`~loaders.StableDiffusionXLLoraLoaderMixin.save_lora_weights`] for saving LoRA weights
         - [`~loaders.IPAdapterMixin.load_ip_adapter`] for loading IP Adapters
+
     Args:
         vae ([`AutoencoderKL`]):
             Variational Auto-Encoder (VAE) Model to encode and decode images to and from latent representations.
@@ -206,7 +209,7 @@ class KolorsPAGPipeline(
 
     # Copied from diffusers.pipelines.kolors.pipeline_kolors.KolorsPipeline.encode_prompt
     def encode_prompt(
-            self,
+        self,
         prompt,
         device: Optional[torch.device] = None,
         num_images_per_prompt: int = 1,
@@ -220,6 +223,7 @@ class KolorsPAGPipeline(
     ):
         r"""
         Encodes the prompt into text encoder hidden states.
+
         Args:
             prompt (`str` or `List[str]`, *optional*):
                 prompt to be encoded
@@ -459,7 +463,7 @@ class KolorsPAGPipeline(
 
     # Copied from diffusers.pipelines.kolors.pipeline_kolors.KolorsPipeline.check_inputs
     def check_inputs(
-             self,
+        self,
         prompt,
         num_inference_steps,
         height,
@@ -611,6 +615,7 @@ class KolorsPAGPipeline(
     ) -> torch.Tensor:
         """
         See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
+
         Args:
             w (`torch.Tensor`):
                 Generate embedding vectors with a specified guidance scale to subsequently enrich timestep embeddings.
@@ -618,6 +623,7 @@ class KolorsPAGPipeline(
                 Dimension of the embeddings to generate.
             dtype (`torch.dtype`, *optional*, defaults to `torch.float32`):
                 Data type of the generated embeddings.
+
         Returns:
             `torch.Tensor`: Embedding vectors with shape `(len(w), embedding_dim)`.
         """
@@ -703,6 +709,7 @@ class KolorsPAGPipeline(
     ):
         r"""
         Function invoked when calling the pipeline for generation.
+
         Args:
             prompt (`str` or `List[str]`, *optional*):
                 The prompt or prompts to guide the image generation. If not defined, one has to pass `prompt_embeds`.
@@ -831,8 +838,7 @@ class KolorsPAGPipeline(
                 The adaptive scale factor for the perturbed attention guidance. If it is set to 0.0, `pag_scale` is
                 used.
             max_sequence_length (`int` defaults to 256): Maximum sequence length to use with the `prompt`.
-        Examples:
-        Returns:
+        Examples: Returns:
             [`~pipelines.kolors.KolorsPipelineOutput`] or `tuple`: [`~pipelines.kolors.KolorsPipelineOutput`] if
             `return_dict` is True, otherwise a `tuple`. When returning a tuple, the first element is a list with the
             generated images.

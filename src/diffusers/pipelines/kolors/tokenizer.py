@@ -142,7 +142,7 @@ class ChatGLMTokenizer(PreTrainedTokenizer):
     @property
     def unk_token(self) -> str:
         return "<unk>"
-    
+
     @unk_token.setter
     def unk_token(self, value: str):
         self._unk_token = value
@@ -150,7 +150,7 @@ class ChatGLMTokenizer(PreTrainedTokenizer):
     @property
     def pad_token(self) -> str:
         return "<unk>"
-    
+
     @pad_token.setter
     def pad_token(self, value: str):
         self._pad_token = value
@@ -166,7 +166,7 @@ class ChatGLMTokenizer(PreTrainedTokenizer):
     @eos_token.setter
     def eos_token(self, value: str):
         self._eos_token = value
-        
+
     @property
     def eos_token_id(self):
         return self.get_command("<eos>")
