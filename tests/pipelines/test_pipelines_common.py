@@ -26,6 +26,7 @@ from diffusers import (
     ConsistencyDecoderVAE,
     DDIMScheduler,
     DiffusionPipeline,
+    KolorsPipeline,
     StableDiffusionPipeline,
     StableDiffusionXLPipeline,
     UNet2DConditionModel,
@@ -38,7 +39,6 @@ from diffusers.models.unets.unet_3d_condition import UNet3DConditionModel
 from diffusers.models.unets.unet_i2vgen_xl import I2VGenXLUNet
 from diffusers.models.unets.unet_motion_model import UNetMotionModel
 from diffusers.pipelines.pipeline_utils import StableDiffusionMixin
-from diffusers.plus_models import ELLAProxyUNet
 from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.utils import logging
 from diffusers.utils.import_utils import is_accelerate_available, is_accelerate_version, is_xformers_available
@@ -657,6 +657,8 @@ class PipelineFromPipeTesterMixin:
     def original_pipeline_class(self):
         if "xl" in self.pipeline_class.__name__.lower():
             original_pipeline_class = StableDiffusionXLPipeline
+        elif "kolors" in self.pipeline_class.__name__.lower():
+            original_pipeline_class = KolorsPipeline
         else:
             original_pipeline_class = StableDiffusionPipeline
 
@@ -682,6 +684,9 @@ class PipelineFromPipeTesterMixin:
         elif self.original_pipeline_class == StableDiffusionXLPipeline:
             original_repo = "hf-internal-testing/tiny-stable-diffusion-xl-pipe"
             original_kwargs = {"requires_aesthetics_score": True, "force_zeros_for_empty_prompt": False}
+        elif self.original_pipeline_class == KolorsPipeline:
+            original_repo = "hf-internal-testing/tiny-kolors-pipe"
+            original_kwargs = {"force_zeros_for_empty_prompt": False}
         else:
             raise ValueError(
                 "original_pipeline_class must be either StableDiffusionPipeline or StableDiffusionXLPipeline"
