@@ -28,6 +28,15 @@ def cosine_distance(image_embeds, text_embeds):
     normalized_text_embeds = nn.functional.normalize(text_embeds)
     return torch.mm(normalized_image_embeds, normalized_text_embeds.t())
 
+## Seems to be working better for now, still not the best of safety models 
+def jaccard_distance(image_embeds, text_embeds, eps=-1):
+    scaler = torch.matmul(image_embeds, text_embeds.t())
+    image_square = image_embeds.pow(2).sum(dim=-1, keepdim=True)
+    text_square = text_embeds.pow(2).sum(dim=-1, keepdim=True)
+    print((scaler / (image_square + text_square.transpose(0,1) - scaler + eps))*2)
+    print(f'{cosine_distance(image_embeds,text_embeds)=}')
+    return (scaler / (image_square + text_square.transpose(0,1) - scaler + eps))*2
+ 
 
 class StableDiffusionSafetyChecker(PreTrainedModel):
     config_class = CLIPConfig
@@ -53,8 +62,8 @@ class StableDiffusionSafetyChecker(PreTrainedModel):
         image_embeds = self.visual_projection(pooled_output)
 
         # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-        special_cos_dist = cosine_distance(image_embeds, self.special_care_embeds).cpu().float().numpy()
-        cos_dist = cosine_distance(image_embeds, self.concept_embeds).cpu().float().numpy()
+        special_cos_dist = jaccard_distance(image_embeds, self.special_care_embeds).cpu().float().numpy()
+        cos_dist = jaccard_distance(image_embeds, self.concept_embeds).cpu().float().numpy()
 
         result = []
         batch_size = image_embeds.shape[0]
@@ -104,8 +113,8 @@ class StableDiffusionSafetyChecker(PreTrainedModel):
         pooled_output = self.vision_model(clip_input)[1]  # pooled_output
         image_embeds = self.visual_projection(pooled_output)
 
-        special_cos_dist = cosine_distance(image_embeds, self.special_care_embeds)
-        cos_dist = cosine_distance(image_embeds, self.concept_embeds)
+        special_cos_dist = jaccard_distance(image_embeds, self.special_care_embeds)
+        cos_dist = jaccard_distance(image_embeds, self.concept_embeds)
 
         # increase this value to create a stronger `nsfw` filter
         # at the cost of increasing the possibility of filtering benign images
@@ -124,3 +133,4 @@ class StableDiffusionSafetyChecker(PreTrainedModel):
         images[has_nsfw_concepts] = 0.0  # black image
 
         return images, has_nsfw_concepts
+
