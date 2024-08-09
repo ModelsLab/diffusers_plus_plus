@@ -61,6 +61,7 @@ from .pag import (
     StableDiffusionXLPAGInpaintPipeline,
     StableDiffusionXLPAGPipeline,
 )
+from .kolors import KolorsPipeline
 from .pixart_alpha import PixArtAlphaPipeline, PixArtSigmaPipeline
 from .stable_cascade import StableCascadeCombinedPipeline, StableCascadeDecoderPipeline
 from .stable_diffusion import (
