@@ -152,6 +152,7 @@ else:
             "HunyuanDiTPAGPipeline",
             "StableDiffusion3PAGPipeline",
             "StableDiffusionPAGPipeline",
+            "KolorsPAGPipeline",
             "StableDiffusionControlNetPAGPipeline",
             "StableDiffusionXLPAGPipeline",
             "StableDiffusionXLPAGInpaintPipeline",
@@ -558,8 +559,8 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
         )
         from .paint_by_example import PaintByExamplePipeline
         from .pia import PIAPipeline
-        from .plus_pipelines import ClothAdapter, OmsDiffusionPipeline
         from .pixart_alpha import PixArtAlphaPipeline, PixArtSigmaPipeline
+        from .plus_pipelines import ClothAdapter, OmsDiffusionPipeline
         from .semantic_stable_diffusion import SemanticStableDiffusionPipeline
         from .shap_e import ShapEImg2ImgPipeline, ShapEPipeline
         from .stable_audio import StableAudioPipeline, StableAudioProjectionModel

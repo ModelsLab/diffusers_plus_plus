@@ -57,7 +57,6 @@ EXAMPLE_DOC_STRING = """
         ...     pag_applied_layers=["down.block_2.attentions_1", "up.block_0.attentions_1"],
         ... )
         >>> pipe = pipe.to("cuda")
-
         >>> prompt = (
         ...     "A photo of a ladybug, macro, zoom, high quality, film, holding a wooden sign with the text 'KOLORS'"
         ... )
@@ -136,6 +135,9 @@ class KolorsPAGPipeline(
     library implements for all the pipelines (such as downloading or saving, running on a particular device, etc.)
 
     The pipeline also inherits the following loading methods:
+    Pipeline for text-to-image generation using Kolors. This model inherits from [`DiffusionPipeline`]. Check the
+    superclass documentation for the generic methods the library implements for all the pipelines (such as downloading
+    or saving, running on a particular device, etc.) The pipeline also inherits the following loading methods:
         - [`~loaders.StableDiffusionXLLoraLoaderMixin.load_lora_weights`] for loading LoRA weights
         - [`~loaders.StableDiffusionXLLoraLoaderMixin.save_lora_weights`] for saving LoRA weights
         - [`~loaders.IPAdapterMixin.load_ip_adapter`] for loading IP Adapters

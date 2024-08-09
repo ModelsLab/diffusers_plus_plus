@@ -53,6 +53,7 @@ from .pag import (
     HunyuanDiTPAGPipeline,
     PixArtSigmaPAGPipeline,
     StableDiffusion3PAGPipeline,
+    KolorsPAGPipeline,
     StableDiffusionControlNetPAGPipeline,
     StableDiffusionPAGPipeline,
     StableDiffusionXLControlNetPAGPipeline,
@@ -106,6 +107,8 @@ AUTO_TEXT2IMAGE_PIPELINES_MAPPING = OrderedDict(
         ("pixart-sigma-pag", PixArtSigmaPAGPipeline),
         ("auraflow", AuraFlowPipeline),
         ("flux", FluxPipeline),
+        ("kolors", KolorsPipeline),
+        ("kolors-pag", KolorsPAGPipeline),
     ]
 )
 

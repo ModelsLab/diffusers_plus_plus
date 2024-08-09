@@ -20,12 +20,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from packaging import version
 from safetensors import safe_open
-from transformers import (
-    CLIPImageProcessor,
-    CLIPTextModel,
-    CLIPTokenizer,
-    CLIPVisionModelWithProjection,
-)
+from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
 
 from diffusers.configuration_utils import FrozenDict
 from diffusers.image_processor import VaeImageProcessor
@@ -45,12 +40,8 @@ from diffusers.models.attention_processor import (
 from diffusers.models.embeddings import MultiIPAdapterImageProjection
 from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline, StableDiffusionMixin
-from diffusers.pipelines.stable_diffusion.pipeline_output import (
-    StableDiffusionPipelineOutput,
-)
-from diffusers.pipelines.stable_diffusion.safety_checker import (
-    StableDiffusionSafetyChecker,
-)
+from diffusers.pipelines.stable_diffusion.pipeline_output import StableDiffusionPipelineOutput
+from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.utils import (
     USE_PEFT_BACKEND,
@@ -66,149 +57,6 @@ from diffusers.utils.torch_utils import randn_tensor
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 
-class LoRAIPAdapterAttnProcessor(nn.Module):
-    r"""
-    Attention processor for IP-Adapater.
-    Args:
-        hidden_size (`int`):
-            The hidden size of the attention layer.
-        cross_attention_dim (`int`):
-            The number of channels in the `encoder_hidden_states`.
-        rank (`int`, defaults to 4):
-            The dimension of the LoRA update matrices.
-        network_alpha (`int`, *optional*):
-            Equivalent to `alpha` but it's usage is specific to Kohya (A1111) style LoRAs.
-        lora_scale (`float`, defaults to 1.0):
-            the weight scale of LoRA.
-        scale (`float`, defaults to 1.0):
-            the weight scale of image prompt.
-        num_tokens (`int`, defaults to 4 when do ip_adapter_plus it should be 16):
-            The context length of the image features.
-    """
-
-    def __init__(
-        self,
-        hidden_size,
-        cross_attention_dim=None,
-        rank=4,
-        network_alpha=None,
-        lora_scale=1.0,
-        scale=1.0,
-        num_tokens=4,
-    ):
-        super().__init__()
-
-        self.rank = rank
-        self.lora_scale = lora_scale
-
-        self.to_q_lora = LoRALinearLayer(hidden_size, hidden_size, rank, network_alpha)
-        self.to_k_lora = LoRALinearLayer(cross_attention_dim or hidden_size, hidden_size, rank, network_alpha)
-        self.to_v_lora = LoRALinearLayer(cross_attention_dim or hidden_size, hidden_size, rank, network_alpha)
-        self.to_out_lora = LoRALinearLayer(hidden_size, hidden_size, rank, network_alpha)
-
-        self.hidden_size = hidden_size
-        self.cross_attention_dim = cross_attention_dim
-        self.scale = scale
-        self.num_tokens = num_tokens
-
-        self.to_k_ip = nn.Linear(cross_attention_dim or hidden_size, hidden_size, bias=False)
-        self.to_v_ip = nn.Linear(cross_attention_dim or hidden_size, hidden_size, bias=False)
-
-    def __call__(
-        self,
-        attn,
-        hidden_states,
-        encoder_hidden_states=None,
-        attention_mask=None,
-        temb=None,
-    ):
-        residual = hidden_states
-
-        # separate ip_hidden_states from encoder_hidden_states
-        if encoder_hidden_states is not None:
-            if isinstance(encoder_hidden_states, tuple):
-                encoder_hidden_states, ip_hidden_states = encoder_hidden_states
-            else:
-                deprecation_message = (
-                    "You have passed a tensor as `encoder_hidden_states`.This is deprecated and will be removed in a future release."
-                    " Please make sure to update your script to pass `encoder_hidden_states` as a tuple to supress this warning."
-                )
-                deprecate(
-                    "encoder_hidden_states not a tuple",
-                    "1.0.0",
-                    deprecation_message,
-                    standard_warn=False,
-                )
-                end_pos = encoder_hidden_states.shape[1] - self.num_tokens[0]
-                encoder_hidden_states, ip_hidden_states = (
-                    encoder_hidden_states[:, :end_pos, :],
-                    [encoder_hidden_states[:, end_pos:, :]],
-                )
-
-        if attn.spatial_norm is not None:
-            hidden_states = attn.spatial_norm(hidden_states, temb)
-
-        input_ndim = hidden_states.ndim
-
-        if input_ndim == 4:
-            batch_size, channel, height, width = hidden_states.shape
-            hidden_states = hidden_states.view(batch_size, channel, height * width).transpose(1, 2)
-
-        batch_size, sequence_length, _ = (
-            hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
-        )
-        attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
-
-        if attn.group_norm is not None:
-            hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
-
-        query = attn.to_q(hidden_states) + self.lora_scale * self.to_q_lora(hidden_states)
-
-        if encoder_hidden_states is None:
-            encoder_hidden_states = hidden_states
-        elif attn.norm_cross:
-            encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
-
-        key = attn.to_k(encoder_hidden_states) + self.lora_scale * self.to_k_lora(encoder_hidden_states)
-        value = attn.to_v(encoder_hidden_states) + self.lora_scale * self.to_v_lora(encoder_hidden_states)
-
-        query = attn.head_to_batch_dim(query)
-        key = attn.head_to_batch_dim(key)
-        value = attn.head_to_batch_dim(value)
-
-        attention_probs = attn.get_attention_scores(query, key, attention_mask)
-        hidden_states = torch.bmm(attention_probs, value)
-        hidden_states = attn.batch_to_head_dim(hidden_states)
-
-        # for ip-adapter
-        ip_key = self.to_k_ip(ip_hidden_states)
-        ip_value = self.to_v_ip(ip_hidden_states)
-
-        ip_key = attn.head_to_batch_dim(ip_key)
-        ip_value = attn.head_to_batch_dim(ip_value)
-
-        ip_attention_probs = attn.get_attention_scores(query, ip_key, None)
-        ip_hidden_states = torch.bmm(ip_attention_probs, ip_value)
-        ip_hidden_states = attn.batch_to_head_dim(ip_hidden_states)
-
-        hidden_states = hidden_states + self.scale * ip_hidden_states
-
-        # linear proj
-        hidden_states = attn.to_out[0](hidden_states) + self.lora_scale * self.to_out_lora(hidden_states)
-        # dropout
-        hidden_states = attn.to_out[1](hidden_states)
-
-        if input_ndim == 4:
-            hidden_states = hidden_states.transpose(-1, -2).reshape(batch_size, channel, height, width)
-
-        if attn.residual_connection:
-            hidden_states = hidden_states + residual
-
-        hidden_states = hidden_states / attn.rescale_output_factor
-
-        return hidden_states
-
-
 class IPAdapterFullImageProjection(nn.Module):
     def __init__(self, image_embed_dim=1024, cross_attention_dim=1024, mult=1, num_tokens=1):
         super().__init__()
@@ -216,12 +64,7 @@ class IPAdapterFullImageProjection(nn.Module):
 
         self.num_tokens = num_tokens
         self.cross_attention_dim = cross_attention_dim
-        self.ff = FeedForward(
-            image_embed_dim,
-            cross_attention_dim * num_tokens,
-            mult=mult,
-            activation_fn="gelu",
-        )
+        self.ff = FeedForward(image_embed_dim, cross_attention_dim * num_tokens, mult=mult, activation_fn="gelu")
         self.norm = nn.LayerNorm(cross_attention_dim)
 
     def forward(self, image_embeds: torch.Tensor):
@@ -732,9 +575,7 @@ class IPAdapterFaceIDStableDiffusionPipeline(
                 prompt_embeds = prompt_embeds[0]
             else:
                 prompt_embeds = self.text_encoder(
-                    text_input_ids.to(device),
-                    attention_mask=attention_mask,
-                    output_hidden_states=True,
+                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
                 )
                 # Access the `hidden_states` first, that contains a tuple of
                 # all the hidden states from the encoder layers. Then index into
@@ -1240,11 +1081,7 @@ class IPAdapterFaceIDStableDiffusionPipeline(
 
                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
-                    noise_pred = rescale_noise_cfg(
-                        noise_pred,
-                        noise_pred_text,
-                        guidance_rescale=self.guidance_rescale,
-                    )
+                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=self.guidance_rescale)
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
@@ -1267,11 +1104,9 @@ class IPAdapterFaceIDStableDiffusionPipeline(
                         callback(step_idx, t, latents)
 
         if not output_type == "latent":
-            image = self.vae.decode(
-                latents / self.vae.config.scaling_factor,
-                return_dict=False,
-                generator=generator,
-            )[0]
+            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
+                0
+            ]
             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
         else:
             image = latents

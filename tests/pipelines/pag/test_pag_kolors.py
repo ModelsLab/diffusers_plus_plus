@@ -21,12 +21,13 @@ import torch
 
 from diffusers import (
     AutoencoderKL,
+    ChatGLMModel,
+    ChatGLMTokenizer,
     EulerDiscreteScheduler,
     KolorsPAGPipeline,
     KolorsPipeline,
     UNet2DConditionModel,
 )
-from diffusers.pipelines.kolors import ChatGLMModel, ChatGLMTokenizer
 from diffusers.utils.testing_utils import enable_full_determinism
 
 from ..pipeline_params import (
@@ -187,18 +188,18 @@ class KolorsPAGPipelineFastTests(
         assert set(pipe.pag_attn_processors) == set(all_self_attn_mid_layers)
 
         pipe.unet.set_attn_processor(original_attn_procs.copy())
-        pag_layers = ["mid_block"]
+        pag_layers = ["mid.block_0"]
         pipe._set_pag_attn_processor(pag_applied_layers=pag_layers, do_classifier_free_guidance=False)
         assert set(pipe.pag_attn_processors) == set(all_self_attn_mid_layers)
 
         pipe.unet.set_attn_processor(original_attn_procs.copy())
-        pag_layers = ["mid_block.attentions.0"]
+        pag_layers = ["mid.block_0.attentions_0"]
         pipe._set_pag_attn_processor(pag_applied_layers=pag_layers, do_classifier_free_guidance=False)
         assert set(pipe.pag_attn_processors) == set(all_self_attn_mid_layers)
 
         # pag_applied_layers = ["mid.block_0.attentions_1"] does not exist in the model
         pipe.unet.set_attn_processor(original_attn_procs.copy())
-        pag_layers = ["mid_block.attentions.1"]
+        pag_layers = ["mid.block_0.attentions_1"]
         with self.assertRaises(ValueError):
             pipe._set_pag_attn_processor(pag_applied_layers=pag_layers, do_classifier_free_guidance=False)
 
@@ -209,17 +210,17 @@ class KolorsPAGPipelineFastTests(
         assert len(pipe.pag_attn_processors) == 4
 
         pipe.unet.set_attn_processor(original_attn_procs.copy())
-        pag_layers = ["down_blocks.0"]
+        pag_layers = ["down.block_0"]
         with self.assertRaises(ValueError):
             pipe._set_pag_attn_processor(pag_applied_layers=pag_layers, do_classifier_free_guidance=False)
 
         pipe.unet.set_attn_processor(original_attn_procs.copy())
-        pag_layers = ["down_blocks.1"]
+        pag_layers = ["down.block_1"]
         pipe._set_pag_attn_processor(pag_applied_layers=pag_layers, do_classifier_free_guidance=False)
         assert len(pipe.pag_attn_processors) == 4
 
         pipe.unet.set_attn_processor(original_attn_procs.copy())
-        pag_layers = ["down_blocks.1.attentions.1"]
+        pag_layers = ["down.block_1.attentions_1"]
         pipe._set_pag_attn_processor(pag_applied_layers=pag_layers, do_classifier_free_guidance=False)
         assert len(pipe.pag_attn_processors) == 2
 
