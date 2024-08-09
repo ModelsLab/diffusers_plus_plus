@@ -25,23 +25,27 @@ from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.loaders import (
     FromSingleFileMixin,
     IPAdapterMixin,
-    StableDiffusionLoraLoaderMixin,
+    StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
 )
 from diffusers.models import AutoencoderKL, ImageProjection, UNet2DConditionModel
 from diffusers.models.attention_processor import AttnProcessor2_0, XFormersAttnProcessor
+from diffusers.models.lora import adjust_lora_scale_text_encoder
 from diffusers.pipelines.pipeline_utils import StableDiffusionMixin
 from diffusers.pipelines.stable_diffusion_xl.pipeline_output import (
     StableDiffusionXLPipelineOutput,
 )
 from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.utils import (
+    USE_PEFT_BACKEND,
     deprecate,
     is_accelerate_available,
     is_accelerate_version,
     is_invisible_watermark_available,
     logging,
     replace_example_docstring,
+    scale_lora_layers,
+    unscale_lora_layers,
 )
 from diffusers.utils.torch_utils import randn_tensor
 
@@ -265,6 +269,7 @@ def get_weighted_text_embeddings_sdxl(
     num_images_per_prompt: int = 1,
     device: Optional[torch.device] = None,
     clip_skip: Optional[int] = None,
+    lora_scale: Optional[int] = None,
 ):
     """
     This function can process long prompt with weights, no length limitation
@@ -284,6 +289,24 @@ def get_weighted_text_embeddings_sdxl(
         neg_prompt_embeds (torch.Tensor)
     """
     device = device or pipe._execution_device
+
+    # set lora scale so that monkey patched LoRA
+    # function of text encoder can correctly access it
+    if lora_scale is not None and isinstance(pipe, StableDiffusionXLLoraLoaderMixin):
+        pipe._lora_scale = lora_scale
+
+        # dynamically adjust the LoRA scale
+        if pipe.text_encoder is not None:
+            if not USE_PEFT_BACKEND:
+                adjust_lora_scale_text_encoder(pipe.text_encoder, lora_scale)
+            else:
+                scale_lora_layers(pipe.text_encoder, lora_scale)
+
+        if pipe.text_encoder_2 is not None:
+            if not USE_PEFT_BACKEND:
+                adjust_lora_scale_text_encoder(pipe.text_encoder_2, lora_scale)
+            else:
+                scale_lora_layers(pipe.text_encoder_2, lora_scale)
 
     if prompt_2:
         prompt = f"{prompt} {prompt_2}"
@@ -439,12 +462,17 @@ def get_weighted_text_embeddings_sdxl(
         bs_embed * num_images_per_prompt, -1
     )
 
-    return (
-        prompt_embeds,
-        negative_prompt_embeds,
-        pooled_prompt_embeds,
-        negative_pooled_prompt_embeds,
-    )
+    if pipe.text_encoder is not None:
+        if isinstance(pipe, StableDiffusionXLLoraLoaderMixin) and USE_PEFT_BACKEND:
+            # Retrieve the original scale by scaling back the LoRA layers
+            unscale_lora_layers(pipe.text_encoder, lora_scale)
+
+    if pipe.text_encoder_2 is not None:
+        if isinstance(pipe, StableDiffusionXLLoraLoaderMixin) and USE_PEFT_BACKEND:
+            # Retrieve the original scale by scaling back the LoRA layers
+            unscale_lora_layers(pipe.text_encoder_2, lora_scale)
+
+    return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
 
 
 # -------------------------------------------------------------------------------------------------------------------------------
@@ -566,7 +594,7 @@ class SDXLLongPromptWeightingPipeline(
     StableDiffusionMixin,
     FromSingleFileMixin,
     IPAdapterMixin,
-    StableDiffusionLoraLoaderMixin,
+    StableDiffusionXLLoraLoaderMixin,
     TextualInversionLoaderMixin,
 ):
     r"""
@@ -578,8 +606,8 @@ class SDXLLongPromptWeightingPipeline(
     The pipeline also inherits the following loading methods:
         - [`~loaders.FromSingleFileMixin.from_single_file`] for loading `.ckpt` files
         - [`~loaders.IPAdapterMixin.load_ip_adapter`] for loading IP Adapters
-        - [`~loaders.StableDiffusionLoraLoaderMixin.load_lora_weights`] for loading LoRA weights
-        - [`~loaders.StableDiffusionLoraLoaderMixin.save_lora_weights`] for saving LoRA weights
+        - [`~loaders.StableDiffusionXLLoraLoaderMixin.load_lora_weights`] for loading LoRA weights
+        - [`~loaders.StableDiffusionXLLoraLoaderMixin.save_lora_weights`] for saving LoRA weights
         - [`~loaders.TextualInversionLoaderMixin.load_textual_inversion`] for loading textual inversion embeddings
 
     Args:
@@ -763,7 +791,7 @@ class SDXLLongPromptWeightingPipeline(
 
         # set lora scale so that monkey patched LoRA
         # function of text encoder can correctly access it
-        if lora_scale is not None and isinstance(self, StableDiffusionLoraLoaderMixin):
+        if lora_scale is not None and isinstance(self, StableDiffusionXLLoraLoaderMixin):
             self._lora_scale = lora_scale
 
         if prompt is not None and isinstance(prompt, str):
@@ -1647,7 +1675,9 @@ class SDXLLongPromptWeightingPipeline(
                 image_embeds = torch.cat([negative_image_embeds, image_embeds])
 
         # 3. Encode input prompt
-        (self.cross_attention_kwargs.get("scale", None) if self.cross_attention_kwargs is not None else None)
+        lora_scale = (
+            self._cross_attention_kwargs.get("scale", None) if self._cross_attention_kwargs is not None else None
+        )
 
         negative_prompt = negative_prompt if negative_prompt is not None else ""
 
@@ -1662,6 +1692,7 @@ class SDXLLongPromptWeightingPipeline(
             neg_prompt=negative_prompt,
             num_images_per_prompt=num_images_per_prompt,
             clip_skip=clip_skip,
+            lora_scale=lora_scale,
         )
         dtype = prompt_embeds.dtype
 

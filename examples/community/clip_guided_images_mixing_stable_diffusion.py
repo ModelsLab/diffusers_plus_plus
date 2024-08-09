@@ -7,7 +7,7 @@ import PIL.Image
 import torch
 from torch.nn import functional as F
 from torchvision import transforms
-from transformers import CLIPFeatureExtractor, CLIPModel, CLIPTextModel, CLIPTokenizer
+from transformers import CLIPImageProcessor, CLIPModel, CLIPTextModel, CLIPTokenizer
 
 from diffusers import (
     AutoencoderKL,
@@ -87,13 +87,8 @@ class CLIPGuidedImagesMixingStableDiffusion(DiffusionPipeline, StableDiffusionMi
         clip_model: CLIPModel,
         tokenizer: CLIPTokenizer,
         unet: UNet2DConditionModel,
-        scheduler: Union[
-            PNDMScheduler,
-            LMSDiscreteScheduler,
-            DDIMScheduler,
-            DPMSolverMultistepScheduler,
-        ],
-        feature_extractor: CLIPFeatureExtractor,
+        scheduler: Union[PNDMScheduler, LMSDiscreteScheduler, DDIMScheduler, DPMSolverMultistepScheduler],
+        feature_extractor: CLIPImageProcessor,
         coca_model=None,
         coca_tokenizer=None,
         coca_transform=None,

@@ -169,7 +169,8 @@ jobs:
         config:
           - name: Hub tests for models, schedulers, and pipelines
             framework: hub_tests_pytorch
-            runner: [ self-hosted, intel-cpu, 8-cpu, ci ]
+            runner:
+              group: aws-general-8-plus
             image: diffusers/diffusers-pytorch-cpu
             report: torch_hub
 
