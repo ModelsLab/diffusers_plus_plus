@@ -203,6 +203,7 @@ else:
     _import_structure["kolors"] = [
         "KolorsPipeline",
         "KolorsImg2ImgPipeline",
+        "KolorsInpaintPipeline",
         "ChatGLMModel",
         "ChatGLMTokenizer",
     ]
@@ -497,6 +498,7 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
             ChatGLMModel,
             ChatGLMTokenizer,
             KolorsImg2ImgPipeline,
+            KolorsInpaintPipeline,
             KolorsPipeline,
         )
         from .latent_consistency_models import (
