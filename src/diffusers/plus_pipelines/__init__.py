@@ -55,6 +55,9 @@ else:
         "EllaFixedDiffusionPipeline",
         "EllaFlexDiffusionPipeline",
     ]
+    _import_structure["kolors_controlnet"] = [
+        "KolorsControlNetPipeline",
+    ]
 
 if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
     try:
@@ -64,6 +67,7 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
         from ..utils.dummy_torch_and_transformers_objects import *
     else:
         from .ella import EllaFixedDiffusionPipeline, EllaFlexDiffusionPipeline
+        from  .kolors_controlnet import KolorsControlNetPipeline
 
 else:
     import sys

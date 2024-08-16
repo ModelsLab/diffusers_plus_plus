@@ -33,10 +33,8 @@ from diffusers.utils.import_utils import is_invisible_watermark_available
 from ...callbacks import MultiPipelineCallbacks, PipelineCallback
 from ...image_processor import PipelineImageInput, VaeImageProcessor
 from ...loaders import (
-    FromSingleFileMixin,
     IPAdapterMixin,
     StableDiffusionXLLoraLoaderMixin,
-    TextualInversionLoaderMixin,
 )
 from ...models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel
 from ...models.attention_processor import (
@@ -51,8 +49,6 @@ from ...utils import (
     deprecate,
     logging,
     replace_example_docstring,
-    scale_lora_layers,
-    unscale_lora_layers,
 )
 from ...utils.torch_utils import is_compiled_module, is_torch_version, randn_tensor
 from ..pipeline_utils import DiffusionPipeline, StableDiffusionMixin
@@ -68,12 +64,6 @@ from ...pipelines.kolors.pipeline_output import KolorsPipelineOutput
 from ...pipelines.kolors.text_encoder import ChatGLMModel
 from ...pipelines.kolors.tokenizer import ChatGLMTokenizer
 
-if is_torch_xla_available():
-    import torch_xla.core.xla_model as xm
-
-    XLA_AVAILABLE = True
-else:
-    XLA_AVAILABLE = False
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -187,10 +177,8 @@ def retrieve_timesteps(
 class KolorsControlNetPipeline(
     DiffusionPipeline,
     StableDiffusionMixin,
-    TextualInversionLoaderMixin,
     StableDiffusionXLLoraLoaderMixin,
     IPAdapterMixin,
-    FromSingleFileMixin,
 ):
     r"""
     Pipeline for text-to-image generation using Stable Diffusion XL with ControlNet guidance.
@@ -238,10 +226,6 @@ class KolorsControlNetPipeline(
     # leave controlnet out on purpose because it iterates with unet
     model_cpu_offload_seq = "text_encoder->text_encoder_2->image_encoder->unet->vae"
     _optional_components = [
-        "tokenizer",
-        #"tokenizer_2",
-        "text_encoder",
-        #"text_encoder_2",
         "feature_extractor",
         "image_encoder",
     ]
@@ -259,14 +243,12 @@ class KolorsControlNetPipeline(
         self,
         vae: AutoencoderKL,
         text_encoder: ChatGLMModel,
-        #text_encoder_2: ChatGLMTokenizer,
         tokenizer: ChatGLMTokenizer,
-        #tokenizer_2: CLIPTokenizer,
         unet: UNet2DConditionModel,
         controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel],
         scheduler: KarrasDiffusionSchedulers,
         force_zeros_for_empty_prompt: bool = True,
-        add_watermarker: Optional[bool] = None,
+        #add_watermarker: Optional[bool] = None,
         feature_extractor: CLIPImageProcessor = None,
         image_encoder: CLIPVisionModelWithProjection = None,
     ):
@@ -278,9 +260,7 @@ class KolorsControlNetPipeline(
         self.register_modules(
             vae=vae,
             text_encoder=text_encoder,
-            #text_encoder_2=text_encoder_2,
             tokenizer=tokenizer,
-            #tokenizer_2=tokenizer_2,
             unet=unet,
             controlnet=controlnet,
             scheduler=scheduler,
@@ -292,31 +272,28 @@ class KolorsControlNetPipeline(
         self.control_image_processor = VaeImageProcessor(
             vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True, do_normalize=False
         )
-        add_watermarker = add_watermarker if add_watermarker is not None else is_invisible_watermark_available()
+        # add_watermarker = add_watermarker if add_watermarker is not None else is_invisible_watermark_available()
 
-        if add_watermarker:
-            self.watermark = StableDiffusionXLWatermarker()
-        else:
-            self.watermark = None
+        # if add_watermarker:
+        #     self.watermark = StableDiffusionXLWatermarker()
+        # else:
+        #     self.watermark = None
 
         self.register_to_config(force_zeros_for_empty_prompt=force_zeros_for_empty_prompt)
 
     # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.StableDiffusionXLPipeline.encode_prompt
     def encode_prompt(
         self,
-        prompt: str,
-        prompt_2: Optional[str] = None,
+        prompt,
         device: Optional[torch.device] = None,
         num_images_per_prompt: int = 1,
         do_classifier_free_guidance: bool = True,
-        negative_prompt: Optional[str] = None,
-        negative_prompt_2: Optional[str] = None,
-        prompt_embeds: Optional[torch.Tensor] = None,
-        negative_prompt_embeds: Optional[torch.Tensor] = None,
+        negative_prompt=None,
+        prompt_embeds: Optional[torch.FloatTensor] = None,
         pooled_prompt_embeds: Optional[torch.Tensor] = None,
+        negative_prompt_embeds: Optional[torch.FloatTensor] = None,
         negative_pooled_prompt_embeds: Optional[torch.Tensor] = None,
-        lora_scale: Optional[float] = None,
-        clip_skip: Optional[int] = None,
+        max_sequence_length: int = 256,
     ):
         r"""
         Encodes the prompt into text encoder hidden states.
@@ -324,9 +301,6 @@ class KolorsControlNetPipeline(
         Args:
             prompt (`str` or `List[str]`, *optional*):
                 prompt to be encoded
-            prompt_2 (`str` or `List[str]`, *optional*):
-                The prompt or prompts to be sent to the `tokenizer_2` and `text_encoder_2`. If not defined, `prompt` is
-                used in both text-encoders
             device: (`torch.device`):
                 torch device
             num_images_per_prompt (`int`):
@@ -337,128 +311,82 @@ class KolorsControlNetPipeline(
                 The prompt or prompts not to guide the image generation. If not defined, one has to pass
                 `negative_prompt_embeds` instead. Ignored when not using guidance (i.e., ignored if `guidance_scale` is
                 less than `1`).
-            negative_prompt_2 (`str` or `List[str]`, *optional*):
-                The prompt or prompts not to guide the image generation to be sent to `tokenizer_2` and
-                `text_encoder_2`. If not defined, `negative_prompt` is used in both text-encoders
-            prompt_embeds (`torch.Tensor`, *optional*):
+            prompt_embeds (`torch.FloatTensor`, *optional*):
                 Pre-generated text embeddings. Can be used to easily tweak text inputs, *e.g.* prompt weighting. If not
                 provided, text embeddings will be generated from `prompt` input argument.
-            negative_prompt_embeds (`torch.Tensor`, *optional*):
-                Pre-generated negative text embeddings. Can be used to easily tweak text inputs, *e.g.* prompt
-                weighting. If not provided, negative_prompt_embeds will be generated from `negative_prompt` input
-                argument.
             pooled_prompt_embeds (`torch.Tensor`, *optional*):
                 Pre-generated pooled text embeddings. Can be used to easily tweak text inputs, *e.g.* prompt weighting.
                 If not provided, pooled text embeddings will be generated from `prompt` input argument.
+            negative_prompt_embeds (`torch.FloatTensor`, *optional*):
+                Pre-generated negative text embeddings. Can be used to easily tweak text inputs, *e.g.* prompt
+                weighting. If not provided, negative_prompt_embeds will be generated from `negative_prompt` input
+                argument.
             negative_pooled_prompt_embeds (`torch.Tensor`, *optional*):
                 Pre-generated negative pooled text embeddings. Can be used to easily tweak text inputs, *e.g.* prompt
                 weighting. If not provided, pooled negative_prompt_embeds will be generated from `negative_prompt`
                 input argument.
-            lora_scale (`float`, *optional*):
-                A lora scale that will be applied to all LoRA layers of the text encoder if LoRA layers are loaded.
-            clip_skip (`int`, *optional*):
-                Number of layers to be skipped from CLIP while computing the prompt embeddings. A value of 1 means that
-                the output of the pre-final layer will be used for computing the prompt embeddings.
+            max_sequence_length (`int` defaults to 256): Maximum sequence length to use with the `prompt`.
         """
+        # from IPython import embed; embed(); exit()
         device = device or self._execution_device
 
-        # set lora scale so that monkey patched LoRA
-        # function of text encoder can correctly access it
-        if lora_scale is not None and isinstance(self, StableDiffusionXLLoraLoaderMixin):
-            self._lora_scale = lora_scale
-
-            # dynamically adjust the LoRA scale
-            if self.text_encoder is not None:
-                if not USE_PEFT_BACKEND:
-                    adjust_lora_scale_text_encoder(self.text_encoder, lora_scale)
-                else:
-                    scale_lora_layers(self.text_encoder, lora_scale)
-
-            # if self.text_encoder_2 is not None:
-            #     if not USE_PEFT_BACKEND:
-            #         adjust_lora_scale_text_encoder(self.text_encoder_2, lora_scale)
-            #     else:
-            #         scale_lora_layers(self.text_encoder_2, lora_scale)
-
-        prompt = [prompt] if isinstance(prompt, str) else prompt
-
-        if prompt is not None:
+        if prompt is not None and isinstance(prompt, str):
+            batch_size = 1
+        elif prompt is not None and isinstance(prompt, list):
             batch_size = len(prompt)
         else:
             batch_size = prompt_embeds.shape[0]
 
         # Define tokenizers and text encoders
         tokenizers = [self.tokenizer]
-        text_encoders = (
-            [self.text_encoder]
-        )
+        text_encoders = [self.text_encoder]
 
         if prompt_embeds is None:
-            prompt_2 = prompt_2 or prompt
-            prompt_2 = [prompt_2] if isinstance(prompt_2, str) else prompt_2
-
-            # textual inversion: process multi-vector tokens if necessary
             prompt_embeds_list = []
-            prompts = [prompt, prompt_2]
-            for prompt, tokenizer, text_encoder in zip(prompts, tokenizers, text_encoders):
-                if isinstance(self, TextualInversionLoaderMixin):
-                    prompt = self.maybe_convert_prompt(prompt, tokenizer)
-
+            for tokenizer, text_encoder in zip(tokenizers, text_encoders):
                 text_inputs = tokenizer(
                     prompt,
                     padding="max_length",
-                    max_length=tokenizer.model_max_length,
+                    max_length=max_sequence_length,
                     truncation=True,
                     return_tensors="pt",
+                ).to(device)
+                output = text_encoder(
+                    input_ids=text_inputs["input_ids"],
+                    attention_mask=text_inputs["attention_mask"],
+                    position_ids=text_inputs["position_ids"],
+                    output_hidden_states=True,
                 )
 
-                text_input_ids = text_inputs.input_ids
-                untruncated_ids = tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
-
-                if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
-                    text_input_ids, untruncated_ids
-                ):
-                    removed_text = tokenizer.batch_decode(untruncated_ids[:, tokenizer.model_max_length - 1 : -1])
-                    logger.warning(
-                        "The following part of your input was truncated because CLIP can only handle sequences up to"
-                        f" {tokenizer.model_max_length} tokens: {removed_text}"
-                    )
-
-                prompt_embeds = text_encoder(text_input_ids.to(device), output_hidden_states=True)
-
-                # We are only ALWAYS interested in the pooled output of the final text encoder
-                pooled_prompt_embeds = prompt_embeds[0]
-                if clip_skip is None:
-                    prompt_embeds = prompt_embeds.hidden_states[-2]
-                else:
-                    # "2" because SDXL always indexes from the penultimate layer.
-                    prompt_embeds = prompt_embeds.hidden_states[-(clip_skip + 2)]
+                # [max_sequence_length, batch, hidden_size] -> [batch, max_sequence_length, hidden_size]
+                # clone to have a contiguous tensor
+                prompt_embeds = output.hidden_states[-2].permute(1, 0, 2).clone()
+                # [max_sequence_length, batch, hidden_size] -> [batch, hidden_size]
+                pooled_prompt_embeds = output.hidden_states[-1][-1, :, :].clone()
+                bs_embed, seq_len, _ = prompt_embeds.shape
+                prompt_embeds = prompt_embeds.repeat(1, num_images_per_prompt, 1)
+                prompt_embeds = prompt_embeds.view(bs_embed * num_images_per_prompt, seq_len, -1)
 
                 prompt_embeds_list.append(prompt_embeds)
 
-            prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
+            prompt_embeds = prompt_embeds_list[0]
 
         # get unconditional embeddings for classifier free guidance
         zero_out_negative_prompt = negative_prompt is None and self.config.force_zeros_for_empty_prompt
+
         if do_classifier_free_guidance and negative_prompt_embeds is None and zero_out_negative_prompt:
             negative_prompt_embeds = torch.zeros_like(prompt_embeds)
-            negative_pooled_prompt_embeds = torch.zeros_like(pooled_prompt_embeds)
         elif do_classifier_free_guidance and negative_prompt_embeds is None:
-            negative_prompt = negative_prompt or ""
-            negative_prompt_2 = negative_prompt_2 or negative_prompt
-
-            # normalize str to list
-            negative_prompt = batch_size * [negative_prompt] if isinstance(negative_prompt, str) else negative_prompt
-            negative_prompt_2 = (
-                batch_size * [negative_prompt_2] if isinstance(negative_prompt_2, str) else negative_prompt_2
-            )
-
             uncond_tokens: List[str]
-            if prompt is not None and type(prompt) is not type(negative_prompt):
+            if negative_prompt is None:
+                uncond_tokens = [""] * batch_size
+            elif prompt is not None and type(prompt) is not type(negative_prompt):
                 raise TypeError(
                     f"`negative_prompt` should be the same type to `prompt`, but got {type(negative_prompt)} !="
                     f" {type(prompt)}."
                 )
+            elif isinstance(negative_prompt, str):
+                uncond_tokens = [negative_prompt]
             elif batch_size != len(negative_prompt):
                 raise ValueError(
                     f"`negative_prompt`: {negative_prompt} has batch size {len(negative_prompt)}, but `prompt`:"
@@ -466,73 +394,55 @@ class KolorsControlNetPipeline(
                     " the batch size of `prompt`."
                 )
             else:
-                uncond_tokens = [negative_prompt, negative_prompt_2]
+                uncond_tokens = negative_prompt
 
             negative_prompt_embeds_list = []
-            for negative_prompt, tokenizer, text_encoder in zip(uncond_tokens, tokenizers, text_encoders):
-                if isinstance(self, TextualInversionLoaderMixin):
-                    negative_prompt = self.maybe_convert_prompt(negative_prompt, tokenizer)
 
-                max_length = prompt_embeds.shape[1]
+            for tokenizer, text_encoder in zip(tokenizers, text_encoders):
                 uncond_input = tokenizer(
-                    negative_prompt,
+                    uncond_tokens,
                     padding="max_length",
-                    max_length=max_length,
+                    max_length=max_sequence_length,
                     truncation=True,
                     return_tensors="pt",
-                )
-
-                negative_prompt_embeds = text_encoder(
-                    uncond_input.input_ids.to(device),
+                ).to(device)
+                output = text_encoder(
+                    input_ids=uncond_input["input_ids"],
+                    attention_mask=uncond_input["attention_mask"],
+                    position_ids=uncond_input["position_ids"],
                     output_hidden_states=True,
                 )
-                # We are only ALWAYS interested in the pooled output of the final text encoder
-                negative_pooled_prompt_embeds = negative_prompt_embeds[0]
-                negative_prompt_embeds = negative_prompt_embeds.hidden_states[-2]
+
+                # [max_sequence_length, batch, hidden_size] -> [batch, max_sequence_length, hidden_size]
+                # clone to have a contiguous tensor
+                negative_prompt_embeds = output.hidden_states[-2].permute(1, 0, 2).clone()
+                # [max_sequence_length, batch, hidden_size] -> [batch, hidden_size]
+                negative_pooled_prompt_embeds = output.hidden_states[-1][-1, :, :].clone()
+
+                if do_classifier_free_guidance:
+                    # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
+                    seq_len = negative_prompt_embeds.shape[1]
+
+                    negative_prompt_embeds = negative_prompt_embeds.to(dtype=text_encoder.dtype, device=device)
+
+                    negative_prompt_embeds = negative_prompt_embeds.repeat(1, num_images_per_prompt, 1)
+                    negative_prompt_embeds = negative_prompt_embeds.view(
+                        batch_size * num_images_per_prompt, seq_len, -1
+                    )
 
                 negative_prompt_embeds_list.append(negative_prompt_embeds)
 
-            negative_prompt_embeds = torch.concat(negative_prompt_embeds_list, dim=-1)
+            negative_prompt_embeds = negative_prompt_embeds_list[0]
 
-        # if self.text_encoder_2 is not None:
-        #     prompt_embeds = prompt_embeds.to(dtype=self.text_encoder_2.dtype, device=device)
-        # else:
-        prompt_embeds = prompt_embeds.to(dtype=self.unet.dtype, device=device)
-
-        bs_embed, seq_len, _ = prompt_embeds.shape
-        # duplicate text embeddings for each generation per prompt, using mps friendly method
-        prompt_embeds = prompt_embeds.repeat(1, num_images_per_prompt, 1)
-        prompt_embeds = prompt_embeds.view(bs_embed * num_images_per_prompt, seq_len, -1)
-
-        if do_classifier_free_guidance:
-            # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
-            seq_len = negative_prompt_embeds.shape[1]
-
-            # if self.text_encoder_2 is not None:
-            #     negative_prompt_embeds = negative_prompt_embeds.to(dtype=self.text_encoder_2.dtype, device=device)
-            # else:
-            negative_prompt_embeds = negative_prompt_embeds.to(dtype=self.unet.dtype, device=device)
-
-            negative_prompt_embeds = negative_prompt_embeds.repeat(1, num_images_per_prompt, 1)
-            negative_prompt_embeds = negative_prompt_embeds.view(batch_size * num_images_per_prompt, seq_len, -1)
-
+        bs_embed = pooled_prompt_embeds.shape[0]
         pooled_prompt_embeds = pooled_prompt_embeds.repeat(1, num_images_per_prompt).view(
             bs_embed * num_images_per_prompt, -1
         )
+
         if do_classifier_free_guidance:
             negative_pooled_prompt_embeds = negative_pooled_prompt_embeds.repeat(1, num_images_per_prompt).view(
                 bs_embed * num_images_per_prompt, -1
             )
-
-        if self.text_encoder is not None:
-            if isinstance(self, StableDiffusionXLLoraLoaderMixin) and USE_PEFT_BACKEND:
-                # Retrieve the original scale by scaling back the LoRA layers
-                unscale_lora_layers(self.text_encoder, lora_scale)
-
-        # if self.text_encoder_2 is not None:
-        #     if isinstance(self, StableDiffusionXLLoraLoaderMixin) and USE_PEFT_BACKEND:
-        #         # Retrieve the original scale by scaling back the LoRA layers
-        #         unscale_lora_layers(self.text_encoder_2, lora_scale)
 
         return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
 
@@ -628,11 +538,9 @@ class KolorsControlNetPipeline(
     def check_inputs(
         self,
         prompt,
-        prompt_2,
         image,
         callback_steps,
         negative_prompt=None,
-        negative_prompt_2=None,
         prompt_embeds=None,
         negative_prompt_embeds=None,
         pooled_prompt_embeds=None,
@@ -662,28 +570,16 @@ class KolorsControlNetPipeline(
                 f"Cannot forward both `prompt`: {prompt} and `prompt_embeds`: {prompt_embeds}. Please make sure to"
                 " only forward one of the two."
             )
-        elif prompt_2 is not None and prompt_embeds is not None:
-            raise ValueError(
-                f"Cannot forward both `prompt_2`: {prompt_2} and `prompt_embeds`: {prompt_embeds}. Please make sure to"
-                " only forward one of the two."
-            )
         elif prompt is None and prompt_embeds is None:
             raise ValueError(
                 "Provide either `prompt` or `prompt_embeds`. Cannot leave both `prompt` and `prompt_embeds` undefined."
             )
         elif prompt is not None and (not isinstance(prompt, str) and not isinstance(prompt, list)):
             raise ValueError(f"`prompt` has to be of type `str` or `list` but is {type(prompt)}")
-        elif prompt_2 is not None and (not isinstance(prompt_2, str) and not isinstance(prompt_2, list)):
-            raise ValueError(f"`prompt_2` has to be of type `str` or `list` but is {type(prompt_2)}")
 
         if negative_prompt is not None and negative_prompt_embeds is not None:
             raise ValueError(
                 f"Cannot forward both `negative_prompt`: {negative_prompt} and `negative_prompt_embeds`:"
-                f" {negative_prompt_embeds}. Please make sure to only forward one of the two."
-            )
-        elif negative_prompt_2 is not None and negative_prompt_embeds is not None:
-            raise ValueError(
-                f"Cannot forward both `negative_prompt_2`: {negative_prompt_2} and `negative_prompt_embeds`:"
                 f" {negative_prompt_embeds}. Please make sure to only forward one of the two."
             )
 
@@ -1007,7 +903,6 @@ class KolorsControlNetPipeline(
     def __call__(
         self,
         prompt: Union[str, List[str]] = None,
-        prompt_2: Optional[Union[str, List[str]]] = None,
         image: PipelineImageInput = None,
         height: Optional[int] = None,
         width: Optional[int] = None,
@@ -1017,7 +912,6 @@ class KolorsControlNetPipeline(
         denoising_end: Optional[float] = None,
         guidance_scale: float = 5.0,
         negative_prompt: Optional[Union[str, List[str]]] = None,
-        negative_prompt_2: Optional[Union[str, List[str]]] = None,
         num_images_per_prompt: Optional[int] = 1,
         eta: float = 0.0,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
@@ -1236,11 +1130,9 @@ class KolorsControlNetPipeline(
         # 1. Check inputs. Raise error if not correct
         self.check_inputs(
             prompt,
-            prompt_2,
             image,
             callback_steps,
             negative_prompt,
-            negative_prompt_2,
             prompt_embeds,
             negative_prompt_embeds,
             pooled_prompt_embeds,
@@ -1289,12 +1181,10 @@ class KolorsControlNetPipeline(
             negative_pooled_prompt_embeds,
         ) = self.encode_prompt(
             prompt,
-            prompt_2,
             device,
             num_images_per_prompt,
             self.do_classifier_free_guidance,
             negative_prompt,
-            negative_prompt_2,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
@@ -1559,21 +1449,13 @@ class KolorsControlNetPipeline(
             if needs_upcasting:
                 self.upcast_vae()
                 latents = latents.to(next(iter(self.vae.post_quant_conv.parameters())).dtype)
+            elif latents.dtype != self.vae.dtype:
+                if torch.backends.mps.is_available():
+                    # some platforms (eg. apple mps) misbehave due to a pytorch bug: https://github.com/pytorch/pytorch/pull/99272
+                    self.vae = self.vae.to(latents.dtype)
 
             # unscale/denormalize the latents
-            # denormalize with the mean and std if available and not None
-            has_latents_mean = hasattr(self.vae.config, "latents_mean") and self.vae.config.latents_mean is not None
-            has_latents_std = hasattr(self.vae.config, "latents_std") and self.vae.config.latents_std is not None
-            if has_latents_mean and has_latents_std:
-                latents_mean = (
-                    torch.tensor(self.vae.config.latents_mean).view(1, 4, 1, 1).to(latents.device, latents.dtype)
-                )
-                latents_std = (
-                    torch.tensor(self.vae.config.latents_std).view(1, 4, 1, 1).to(latents.device, latents.dtype)
-                )
-                latents = latents * latents_std / self.vae.config.scaling_factor + latents_mean
-            else:
-                latents = latents / self.vae.config.scaling_factor
+            latents = latents / self.vae.config.scaling_factor
 
             image = self.vae.decode(latents, return_dict=False)[0]
 

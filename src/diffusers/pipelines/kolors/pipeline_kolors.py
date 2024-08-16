@@ -122,6 +122,7 @@ def retrieve_timesteps(
 
 
 class KolorsPipeline(DiffusionPipeline, StableDiffusionMixin, StableDiffusionXLLoraLoaderMixin, IPAdapterMixin):
+    
     r"""
     Pipeline for text-to-image generation using Kolors.
 
